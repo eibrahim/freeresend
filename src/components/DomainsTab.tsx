@@ -1,0 +1,264 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { api } from "@/lib/api";
+
+interface Domain {
+  id: string;
+  domain: string;
+  status: "pending" | "verified" | "failed";
+  dns_records: any[];
+  created_at: string;
+}
+
+export default function DomainsTab() {
+  const [domains, setDomains] = useState<Domain[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [addingDomain, setAddingDomain] = useState(false);
+  const [newDomain, setNewDomain] = useState("");
+  const [showDNSModal, setShowDNSModal] = useState<Domain | null>(null);
+
+  useEffect(() => {
+    loadDomains();
+  }, []);
+
+  const loadDomains = async () => {
+    try {
+      const response = await api.getDomains();
+      setDomains(response.data.domains);
+    } catch (error) {
+      console.error("Failed to load domains:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddDomain = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newDomain.trim()) return;
+
+    setAddingDomain(true);
+    try {
+      const response = await api.addDomain(newDomain.trim());
+      setDomains([response.data.domain, ...domains]);
+      setNewDomain("");
+      setShowDNSModal(response.data.domain);
+    } catch (error: any) {
+      alert(error.message || "Failed to add domain");
+    } finally {
+      setAddingDomain(false);
+    }
+  };
+
+  const handleVerifyDomain = async (domainId: string) => {
+    try {
+      const response = await api.verifyDomain(domainId);
+      await loadDomains(); // Refresh domains list
+      alert(response.message);
+    } catch (error: any) {
+      alert(error.message || "Failed to verify domain");
+    }
+  };
+
+  const handleDeleteDomain = async (domainId: string) => {
+    if (!confirm("Are you sure you want to delete this domain?")) return;
+
+    try {
+      await api.deleteDomain(domainId);
+      setDomains(domains.filter((d) => d.id !== domainId));
+    } catch (error: any) {
+      alert(error.message || "Failed to delete domain");
+    }
+  };
+
+  const getStatusBadge = (status: Domain["status"]) => {
+    const colors = {
+      pending: "bg-yellow-100 text-yellow-800",
+      verified: "bg-green-100 text-green-800",
+      failed: "bg-red-100 text-red-800",
+    };
+
+    return (
+      <span
+        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colors[status]}`}
+      >
+        {status}
+      </span>
+    );
+  };
+
+  if (loading) {
+    return <div className="text-center py-8">Loading domains...</div>;
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="sm:flex sm:items-center">
+        <div className="sm:flex-auto">
+          <h1 className="text-xl font-semibold text-gray-900">Domains</h1>
+          <p className="mt-2 text-sm text-gray-700">
+            Add and manage your email domains. Domains must be verified before
+            you can send emails.
+          </p>
+        </div>
+      </div>
+
+      {/* Add Domain Form */}
+      <div className="bg-white shadow rounded-lg">
+        <div className="px-4 py-5 sm:p-6">
+          <h3 className="text-lg leading-6 font-medium text-gray-900">
+            Add New Domain
+          </h3>
+          <div className="mt-2 max-w-xl text-sm text-gray-500">
+            <p>Enter a domain you want to use for sending emails.</p>
+          </div>
+          <form
+            onSubmit={handleAddDomain}
+            className="mt-5 sm:flex sm:items-center"
+          >
+            <div className="w-full sm:max-w-xs">
+              <input
+                type="text"
+                placeholder="example.com"
+                value={newDomain}
+                onChange={(e) => setNewDomain(e.target.value)}
+                className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                disabled={addingDomain}
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={addingDomain || !newDomain.trim()}
+              className="mt-3 w-full inline-flex items-center justify-center px-4 py-2 border border-transparent shadow-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {addingDomain ? "Adding..." : "Add Domain"}
+            </button>
+          </form>
+        </div>
+      </div>
+
+      {/* Domains List */}
+      <div className="bg-white shadow overflow-hidden sm:rounded-md">
+        {domains.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            No domains added yet. Add your first domain to get started.
+          </div>
+        ) : (
+          <ul className="divide-y divide-gray-200">
+            {domains.map((domain) => (
+              <li key={domain.id}>
+                <div className="px-4 py-4 sm:px-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        {getStatusBadge(domain.status)}
+                      </div>
+                      <div className="ml-4">
+                        <div className="text-sm font-medium text-gray-900">
+                          {domain.domain}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          Added{" "}
+                          {new Date(domain.created_at).toLocaleDateString()}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      {domain.status === "pending" && (
+                        <>
+                          <button
+                            onClick={() => setShowDNSModal(domain)}
+                            className="text-blue-600 hover:text-blue-900 text-sm font-medium"
+                          >
+                            View DNS Records
+                          </button>
+                          <button
+                            onClick={() => handleVerifyDomain(domain.id)}
+                            className="text-green-600 hover:text-green-900 text-sm font-medium"
+                          >
+                            Check Verification
+                          </button>
+                        </>
+                      )}
+                      <button
+                        onClick={() => handleDeleteDomain(domain.id)}
+                        className="text-red-600 hover:text-red-900 text-sm font-medium"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {/* DNS Records Modal */}
+      {showDNSModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-2xl shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                DNS Records for {showDNSModal.domain}
+              </h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Add these DNS records to your domain provider to verify
+                ownership and enable email sending:
+              </p>
+
+              <div className="space-y-4">
+                {showDNSModal.dns_records?.map((record: any, index: number) => (
+                  <div key={index} className="bg-gray-50 p-4 rounded-lg">
+                    <div className="grid grid-cols-3 gap-4 text-sm">
+                      <div>
+                        <span className="font-medium text-gray-700">Type:</span>
+                        <div className="mt-1">{record.type}</div>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-700">Name:</span>
+                        <div className="mt-1 break-all">{record.name}</div>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-700">
+                          Value:
+                        </span>
+                        <div className="mt-1 break-all font-mono text-xs bg-white p-2 rounded border">
+                          {record.value}
+                        </div>
+                      </div>
+                    </div>
+                    {record.description && (
+                      <div className="mt-2 text-xs text-gray-500">
+                        {record.description}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-6 flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowDNSModal(null)}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
+                >
+                  Close
+                </button>
+                <button
+                  onClick={() => {
+                    handleVerifyDomain(showDNSModal.id);
+                    setShowDNSModal(null);
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md"
+                >
+                  Check Verification
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

@@ -1,0 +1,27 @@
+version: "3.8"
+
+services:
+  freeresend:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - .env.local
+    restart: unless-stopped
+
+  # Optional: PostgreSQL database if not using Supabase
+  # postgres:
+  #   image: postgres:15-alpine
+  #   environment:
+  #     POSTGRES_DB: freeresend
+  #     POSTGRES_USER: freeresend
+  #     POSTGRES_PASSWORD: your-password
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #     - ./database.sql:/docker-entrypoint-initdb.d/init.sql
+  #   ports:
+  #     - "5432:5432"
+# volumes:
+#   postgres_data:
