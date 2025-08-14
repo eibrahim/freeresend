@@ -46,12 +46,23 @@ export async function generateApiKey(
 
 export async function verifyApiKey(apiKey: string): Promise<ApiKey | null> {
   // Extract prefix for efficient lookup
-  const parts = apiKey.split("_");
-  if (parts.length !== 3 || parts[0] !== "frs") {
+  // Split only on the first two underscores to handle underscores in the secret part
+  const firstUnderscore = apiKey.indexOf("_");
+  const secondUnderscore = apiKey.indexOf("_", firstUnderscore + 1);
+
+  if (firstUnderscore === -1 || secondUnderscore === -1) {
     return null;
   }
 
-  const prefix = `${parts[0]}_${parts[1]}`;
+  const prefix_part = apiKey.substring(0, firstUnderscore);
+  const keyId_part = apiKey.substring(firstUnderscore + 1, secondUnderscore);
+  const secret_part = apiKey.substring(secondUnderscore + 1);
+
+  if (prefix_part !== "frs" || !keyId_part || !secret_part) {
+    return null;
+  }
+
+  const prefix = `${prefix_part}_${keyId_part}`;
 
   const { data: keys, error } = await supabaseAdmin
     .from("api_keys")

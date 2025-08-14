@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { withAuth, withCors, handleError } from "@/lib/middleware";
+import { withAuth, withApiKey, withCors, handleError } from "@/lib/middleware";
 import { supabaseAdmin } from "@/lib/supabase";
 import type { AuthenticatedRequest } from "@/lib/middleware";
 
@@ -13,17 +13,29 @@ async function getEmailLogsHandler(req: AuthenticatedRequest) {
 
     const offset = (page - 1) * limit;
 
-    // First get the user's domain IDs
-    const { data: userDomains, error: domainsError } = await supabaseAdmin
-      .from("domains")
-      .select("id")
-      .eq("user_id", req.user!.id);
+    // Get domain IDs based on authentication type
+    let domainIds: string[] = [];
 
-    if (domainsError) {
-      throw new Error(`Failed to fetch user domains: ${domainsError.message}`);
+    if (req.apiKey) {
+      // API key authentication - use the specific domain
+      domainIds = [req.apiKey.domain_id];
+    } else if (req.user) {
+      // User authentication - get all user's domains
+      const { data: userDomains, error: domainsError } = await supabaseAdmin
+        .from("domains")
+        .select("id")
+        .eq("user_id", req.user.id);
+
+      if (domainsError) {
+        throw new Error(
+          `Failed to fetch user domains: ${domainsError.message}`
+        );
+      }
+
+      domainIds = userDomains?.map((d) => d.id) || [];
+    } else {
+      throw new Error("Authentication required");
     }
-
-    const domainIds = userDomains?.map((d) => d.id) || [];
 
     // If user has no domains, return empty result
     if (domainIds.length === 0) {
@@ -89,4 +101,15 @@ async function getEmailLogsHandler(req: AuthenticatedRequest) {
   }
 }
 
-export const GET = withCors(withAuth(getEmailLogsHandler));
+// Support both user authentication (dashboard) and API key authentication
+export const GET = withCors(async (req: NextRequest, context?: any) => {
+  const authHeader = req.headers.get("authorization");
+
+  if (authHeader?.startsWith("Bearer frs_")) {
+    // API key authentication
+    return withApiKey(getEmailLogsHandler)(req, context);
+  } else {
+    // User JWT authentication
+    return withAuth(getEmailLogsHandler)(req, context);
+  }
+});
