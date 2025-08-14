@@ -4,6 +4,8 @@ import {
   getDomainVerificationStatus,
   createConfigurationSet,
   generateDNSRecords,
+  enableDomainDkim,
+  getDomainDkimTokens,
 } from "./ses";
 import { setupDomainDNS, verifyDomainOwnership } from "./digitalocean";
 import type { Domain } from "./supabase";
@@ -40,16 +42,31 @@ export async function addDomain(
     // 1. Verify domain with Amazon SES
     const sesVerification = await verifyDomain(domainName);
 
-    // 2. Create SES configuration set
+    // 2. Enable DKIM for the domain (optional - graceful fallback)
+    let dkimTokens: string[] = [];
+    try {
+      dkimTokens = await enableDomainDkim(domainName);
+      console.log(
+        `DKIM enabled for ${domainName} with ${dkimTokens.length} tokens`
+      );
+    } catch (error: any) {
+      console.warn(`DKIM setup failed for ${domainName}:`, error.message);
+      console.warn(
+        "Continuing without DKIM (you can set it up manually in AWS SES console)"
+      );
+    }
+
+    // 3. Create SES configuration set
     const configurationSet = await createConfigurationSet(domainName);
 
-    // 3. Generate DNS records
+    // 4. Generate DNS records (including DKIM if available)
     const dnsRecords = generateDNSRecords(
       domainName,
-      sesVerification.verificationToken
+      sesVerification.verificationToken,
+      dkimTokens
     );
 
-    // 4. Setup DNS records in Digital Ocean (if configured)
+    // 5. Setup DNS records in Digital Ocean (if configured)
     let digitalOceanRecords = [];
     let setupInstructions = "";
 

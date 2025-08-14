@@ -31,7 +31,9 @@ This guide will help you set up FreeResend from scratch.
         "ses:VerifyDomainIdentity",
         "ses:GetIdentityVerificationAttributes",
         "ses:DeleteIdentity",
-        "ses:CreateConfigurationSet"
+        "ses:CreateConfigurationSet",
+        "ses:VerifyDomainDkim",
+        "ses:GetIdentityDkimAttributes"
       ],
       "Resource": "*"
     }

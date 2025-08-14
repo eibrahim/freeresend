@@ -13,6 +13,34 @@ async function getEmailLogsHandler(req: AuthenticatedRequest) {
 
     const offset = (page - 1) * limit;
 
+    // First get the user's domain IDs
+    const { data: userDomains, error: domainsError } = await supabaseAdmin
+      .from("domains")
+      .select("id")
+      .eq("user_id", req.user!.id);
+
+    if (domainsError) {
+      throw new Error(`Failed to fetch user domains: ${domainsError.message}`);
+    }
+
+    const domainIds = userDomains?.map((d) => d.id) || [];
+
+    // If user has no domains, return empty result
+    if (domainIds.length === 0) {
+      return NextResponse.json({
+        success: true,
+        data: {
+          emails: [],
+          pagination: {
+            page,
+            limit,
+            total: 0,
+            totalPages: 0,
+          },
+        },
+      });
+    }
+
     let query = supabaseAdmin
       .from("email_logs")
       .select(
@@ -26,10 +54,7 @@ async function getEmailLogsHandler(req: AuthenticatedRequest) {
         )
       `
       )
-      .in(
-        "domain_id",
-        supabaseAdmin.from("domains").select("id").eq("user_id", req.user!.id)
-      )
+      .in("domain_id", domainIds)
       .order("created_at", { ascending: false })
       .range(offset, offset + limit - 1);
 

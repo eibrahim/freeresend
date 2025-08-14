@@ -6,6 +6,8 @@ import {
   GetIdentityVerificationAttributesCommand,
   DeleteIdentityCommand,
   CreateConfigurationSetCommand,
+  VerifyDomainDkimCommand,
+  GetIdentityDkimAttributesCommand,
 } from "@aws-sdk/client-ses";
 
 const sesClient = new SESClient({
@@ -183,6 +185,26 @@ export async function getDomainVerificationStatus(
   return attributes?.VerificationStatus || "NotStarted";
 }
 
+export async function enableDomainDkim(domain: string): Promise<string[]> {
+  const command = new VerifyDomainDkimCommand({
+    Domain: domain,
+  });
+
+  const response = await sesClient.send(command);
+  return response.DkimTokens || [];
+}
+
+export async function getDomainDkimTokens(domain: string): Promise<string[]> {
+  const command = new GetIdentityDkimAttributesCommand({
+    Identities: [domain],
+  });
+
+  const response = await sesClient.send(command);
+  const attributes = response.DkimAttributes?.[domain];
+
+  return attributes?.DkimTokens || [];
+}
+
 export async function deleteDomainIdentity(domain: string): Promise<void> {
   const command = new DeleteIdentityCommand({
     Identity: domain,
@@ -223,8 +245,12 @@ export async function createConfigurationSet(domain: string): Promise<string> {
   }
 }
 
-export function generateDNSRecords(domain: string, verificationToken: string) {
-  return [
+export function generateDNSRecords(
+  domain: string,
+  verificationToken: string,
+  dkimTokens: string[] = []
+) {
+  const records = [
     {
       type: "TXT",
       name: `_amazonses.${domain}`,
@@ -254,4 +280,17 @@ export function generateDNSRecords(domain: string, verificationToken: string) {
       description: "DMARC Policy",
     },
   ];
+
+  // Add DKIM CNAME records
+  dkimTokens.forEach((token) => {
+    records.push({
+      type: "CNAME",
+      name: `${token}._domainkey.${domain}`,
+      value: `${token}.dkim.amazonses.com.`, // Trailing dot required
+      ttl: 300,
+      description: `DKIM Record (${token.substring(0, 8)}...)`,
+    });
+  });
+
+  return records;
 }

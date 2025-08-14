@@ -99,7 +99,9 @@ Visit `http://localhost:3000` and log in with your admin credentials.
         "ses:VerifyDomainIdentity",
         "ses:GetIdentityVerificationAttributes",
         "ses:DeleteIdentity",
-        "ses:CreateConfigurationSet"
+        "ses:CreateConfigurationSet",
+        "ses:VerifyDomainDkim",
+        "ses:GetIdentityDkimAttributes"
       ],
       "Resource": "*"
     }
