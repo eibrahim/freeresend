@@ -205,24 +205,54 @@ export async function setupDomainDNS(
     for (const record of dnsRecords) {
       try {
         // Check if record already exists
-        const recordExists = existingRecords.some(
-          (existing) =>
-            existing.type === record.type &&
-            existing.name ===
-              (record.name === domain
-                ? "@"
-                : record.name.replace(`.${domain}`, "")) &&
-            existing.data === record.value
-        );
+        const recordName =
+          record.name === domain ? "@" : record.name.replace(`.${domain}`, "");
+
+        // For CNAME records, check if ANY record exists with that name (CNAME conflict)
+        // For other records, check for exact match
+        const recordExists =
+          record.type === "CNAME"
+            ? existingRecords.some((existing) => existing.name === recordName)
+            : existingRecords.some(
+                (existing) =>
+                  existing.type === record.type &&
+                  existing.name === recordName &&
+                  existing.data === record.value
+              );
 
         if (!recordExists) {
           const createdRecord = await createDNSRecord(domain, record);
           createdRecords.push(createdRecord);
           console.log(`Created ${record.type} record for ${record.name}`);
         } else {
-          console.log(
-            `${record.type} record for ${record.name} already exists`
-          );
+          if (record.type === "CNAME") {
+            const existingRecord = existingRecords.find(
+              (existing) => existing.name === recordName
+            );
+
+            // Normalize values for comparison (handle trailing dots)
+            const normalizeValue = (value: string) =>
+              value.endsWith(".") ? value.slice(0, -1) : value;
+            const existingValue = existingRecord
+              ? normalizeValue(existingRecord.data)
+              : "";
+            const expectedValue = normalizeValue(record.value);
+
+            if (existingRecord && existingValue !== expectedValue) {
+              console.log(
+                `CNAME record for ${record.name} exists but points to different value. Existing: ${existingRecord.data}, Expected: ${record.value}`
+              );
+              // Optionally update the record here if needed
+            } else {
+              console.log(
+                `CNAME record for ${record.name} already exists with correct value`
+              );
+            }
+          } else {
+            console.log(
+              `${record.type} record for ${record.name} already exists`
+            );
+          }
         }
 
         // Small delay to avoid rate limiting

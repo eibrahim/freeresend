@@ -9,7 +9,7 @@
  */
 
 const API_BASE_URL = "http://localhost:3000";
-const API_KEY = "frs_f0GrND5i_e_jmHrSf7abrlAv8Wo-ZYo1DvEaTmxit"; // Replace with your actual API key from FreeResend
+const API_KEY = ""; // Replace with your actual API key from FreeResend
 const FROM_EMAIL = "info@freeresend.com"; // Replace with your verified domain
 const TO_EMAIL = "eibrahim@gmail.com"; // Replace with your email address
 

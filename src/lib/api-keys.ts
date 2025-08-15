@@ -7,6 +7,22 @@ export interface ApiKeyWithKey extends Omit<ApiKey, "key_hash"> {
   key: string;
 }
 
+// Helper function to safely parse permissions (handles both string and array)
+function safeParsePermissions(permissions: unknown): string[] {
+  if (!permissions) return ["send"];
+  if (typeof permissions === "string") {
+    try {
+      return JSON.parse(permissions);
+    } catch {
+      return ["send"];
+    }
+  }
+  if (Array.isArray(permissions)) {
+    return permissions;
+  }
+  return ["send"];
+}
+
 export async function generateApiKey(
   userId: string,
   domainId: string,
@@ -43,7 +59,7 @@ export async function generateApiKey(
     const data = result.rows[0];
     return {
       ...data,
-      permissions: JSON.parse(data.permissions), // Convert back from JSON string
+      permissions: safeParsePermissions(data.permissions),
       key: apiKey,
     };
   } catch (error: any) {
@@ -92,7 +108,7 @@ export async function verifyApiKey(apiKey: string): Promise<ApiKey | null> {
         // Parse JSON fields
         return {
           ...key,
-          permissions: JSON.parse(key.permissions),
+          permissions: safeParsePermissions(key.permissions),
         };
       }
     }
@@ -119,7 +135,7 @@ export async function getUserApiKeys(userId: string): Promise<ApiKey[]> {
 
     return result.rows.map((row) => ({
       ...row,
-      permissions: JSON.parse(row.permissions),
+      permissions: safeParsePermissions(row.permissions),
       domains: row.domain_name ? { domain: row.domain_name } : null,
     }));
   } catch (error: any) {
@@ -138,7 +154,7 @@ export async function getDomainApiKeys(domainId: string): Promise<ApiKey[]> {
 
     return result.rows.map((row) => ({
       ...row,
-      permissions: JSON.parse(row.permissions),
+      permissions: safeParsePermissions(row.permissions),
     }));
   } catch (error: any) {
     throw new Error(`Failed to fetch domain API keys: ${error.message}`);

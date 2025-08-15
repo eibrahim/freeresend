@@ -60,7 +60,7 @@ export interface Domain {
   domain: string;
   status: "pending" | "verified" | "failed";
   ses_identity_arn?: string;
-  ses_verification_token?: string;
+  verification_token?: string;
   ses_configuration_set?: string;
   do_domain_id?: string;
   dns_records: any[];

@@ -3,6 +3,22 @@ import { withAuth, withApiKey, withCors, handleError } from "@/lib/middleware";
 import { query } from "@/lib/database";
 import type { AuthenticatedRequest } from "@/lib/middleware";
 
+// Helper function to safely parse email arrays (handles both string and array)
+function safeParseEmailArray(emailData: unknown): string[] {
+  if (!emailData) return [];
+  if (typeof emailData === "string") {
+    try {
+      return JSON.parse(emailData);
+    } catch {
+      return [];
+    }
+  }
+  if (Array.isArray(emailData)) {
+    return emailData;
+  }
+  return [];
+}
+
 async function getEmailLogsHandler(req: AuthenticatedRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -93,10 +109,10 @@ async function getEmailLogsHandler(req: AuthenticatedRequest) {
     // Parse JSON fields and format data
     const emailLogs = emailLogsResult.rows.map((row) => ({
       ...row,
-      to_emails: JSON.parse(row.to_emails || "[]"),
-      cc_emails: JSON.parse(row.cc_emails || "[]"),
-      bcc_emails: JSON.parse(row.bcc_emails || "[]"),
-      attachments: JSON.parse(row.attachments || "[]"),
+      to_emails: safeParseEmailArray(row.to_emails),
+      cc_emails: safeParseEmailArray(row.cc_emails),
+      bcc_emails: safeParseEmailArray(row.bcc_emails),
+      attachments: safeParseEmailArray(row.attachments),
       domains: row.domain_name ? { domain: row.domain_name } : null,
       api_keys: row.api_key_name ? { key_name: row.api_key_name } : null,
     }));

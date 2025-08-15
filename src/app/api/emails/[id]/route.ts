@@ -1,7 +1,39 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { withAuth, withCors, handleError } from "@/lib/middleware";
 import { query } from "@/lib/database";
 import type { AuthenticatedRequest } from "@/lib/middleware";
+
+// Helper function to safely parse email arrays (handles both string and array)
+function safeParseEmailArray(emailData: unknown): string[] {
+  if (!emailData) return [];
+  if (typeof emailData === "string") {
+    try {
+      return JSON.parse(emailData);
+    } catch {
+      return [];
+    }
+  }
+  if (Array.isArray(emailData)) {
+    return emailData;
+  }
+  return [];
+}
+
+// Helper function to safely parse JSON objects (handles both string and object)
+function safeParseJSON(jsonData: unknown): Record<string, unknown> {
+  if (!jsonData) return {};
+  if (typeof jsonData === "string") {
+    try {
+      return JSON.parse(jsonData);
+    } catch {
+      return {};
+    }
+  }
+  if (typeof jsonData === "object" && jsonData !== null) {
+    return jsonData as Record<string, unknown>;
+  }
+  return {};
+}
 
 async function getEmailHandler(
   req: AuthenticatedRequest,
@@ -47,10 +79,10 @@ async function getEmailHandler(
     // Format the response to match original structure
     const email = {
       ...emailData,
-      to_emails: JSON.parse(emailData.to_emails || "[]"),
-      cc_emails: JSON.parse(emailData.cc_emails || "[]"),
-      bcc_emails: JSON.parse(emailData.bcc_emails || "[]"),
-      attachments: JSON.parse(emailData.attachments || "[]"),
+      to_emails: safeParseEmailArray(emailData.to_emails),
+      cc_emails: safeParseEmailArray(emailData.cc_emails),
+      bcc_emails: safeParseEmailArray(emailData.bcc_emails),
+      attachments: safeParseEmailArray(emailData.attachments),
       domains: {
         domain: emailData.domain_name,
         user_id: emailData.domain_user_id,
@@ -60,7 +92,7 @@ async function getEmailHandler(
         : null,
       webhook_events: webhookResult.rows.map((row) => ({
         ...row,
-        event_data: JSON.parse(row.event_data || "{}"),
+        event_data: safeParseJSON(row.event_data),
       })),
     };
 

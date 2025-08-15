@@ -3,7 +3,7 @@
 # FreeResend Email Testing with cURL
 # Replace these variables with your actual values
 
-API_KEY="frs_f0GrND5i_e_jmHrSf7abrlAv8Wo-ZYo1DvEaTmxit"  # Get from FreeResend API Keys tab
+API_KEY=""  # Get from FreeResend API Keys tab
 FROM_EMAIL="info@freeresend.com"  # Your verified domain email
 TO_EMAIL="eibrahim@gmail.com"  # Your email address
 BASE_URL="http://localhost:3000"
