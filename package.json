@@ -1,7 +1,28 @@
 {
   "name": "freeresend",
-  "version": "0.1.0",
-  "private": true,
+  "version": "1.0.0",
+  "description": "Self-hosted, open-source alternative to Resend for sending transactional emails with Amazon SES",
+  "author": "Emad Ibrahim <eibrahim@gmail.com> (https://x.com/eibrahim)",
+  "license": "MIT",
+  "homepage": "https://github.com/eibrahim/freeresend#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eibrahim/freeresend.git"
+  },
+  "bugs": {
+    "url": "https://github.com/eibrahim/freeresend/issues"
+  },
+  "keywords": [
+    "email",
+    "resend",
+    "alternative",
+    "self-hosted",
+    "amazon-ses",
+    "transactional-email",
+    "email-api",
+    "nextjs",
+    "typescript"
+  ],
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",

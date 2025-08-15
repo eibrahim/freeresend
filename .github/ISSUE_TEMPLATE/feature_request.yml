@@ -1,0 +1,74 @@
+name: ✨ Feature Request
+description: Suggest a new feature or enhancement for FreeResend
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for your interest in improving FreeResend! Please describe your feature request below.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Description
+      description: Is your feature request related to a problem? Please describe the problem you're trying to solve.
+      placeholder: "I'm frustrated when..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: Describe the solution you'd like to see implemented.
+      placeholder: "I would like to see..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Describe any alternative solutions or features you've considered.
+      placeholder: "I've also considered..."
+
+  - type: dropdown
+    id: complexity
+    attributes:
+      label: Implementation Complexity (estimated)
+      options:
+        - Low (small changes to existing code)
+        - Medium (new features with moderate complexity)
+        - High (major changes or new systems)
+        - Not sure
+
+  - type: checkboxes
+    id: categories
+    attributes:
+      label: Feature Category
+      description: Which areas does this feature relate to? (select all that apply)
+      options:
+        - label: Email sending/delivery
+        - label: Domain management
+        - label: API compatibility
+        - label: Dashboard/UI
+        - label: Authentication/Security
+        - label: Documentation
+        - label: Testing/Development
+        - label: Performance
+        - label: DevOps/Deployment
+
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use Case
+      description: Describe how this feature would be used and who would benefit from it.
+      placeholder: "This would help users to..."
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Add any other context, mockups, or examples about the feature request here.
+      placeholder: "Links to similar implementations, mockups, etc."
