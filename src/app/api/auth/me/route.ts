@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { withAuth, withCors, handleError } from "@/lib/middleware";
 import type { AuthenticatedRequest } from "@/lib/middleware";
 

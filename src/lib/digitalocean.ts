@@ -52,10 +52,11 @@ export async function getDomains(): Promise<DODomain[]> {
   try {
     const response = await doClient.get("/domains");
     return response.data.domains;
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const axiosError = error as { response?: { data?: { message?: string } }; message?: string };
     throw new Error(
       `Failed to fetch domains: ${
-        error.response?.data?.message || error.message
+        axiosError.response?.data?.message || axiosError.message
       }`
     );
   }
@@ -71,10 +72,11 @@ export async function getDomainRecords(
   try {
     const response = await doClient.get(`/domains/${domain}/records`);
     return response.data.domain_records;
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const axiosError = error as { response?: { data?: { message?: string } }; message?: string };
     throw new Error(
       `Failed to fetch domain records: ${
-        error.response?.data?.message || error.message
+        axiosError.response?.data?.message || axiosError.message
       }`
     );
   }
@@ -107,16 +109,17 @@ export async function createDNSRecord(
           hostname += ".";
         }
         payload.data = hostname;
-        (payload as any).priority = parseInt(parts[0]);
+        (payload as { data: string; priority: number; type: string; name: string; ttl: number }).priority = parseInt(parts[0]);
       }
     }
 
     const response = await doClient.post(`/domains/${domain}/records`, payload);
     return response.data.domain_record;
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const axiosError = error as { response?: { data?: { message?: string } }; message?: string };
     throw new Error(
       `Failed to create DNS record: ${
-        error.response?.data?.message || error.message
+        axiosError.response?.data?.message || axiosError.message
       }`
     );
   }
@@ -132,7 +135,7 @@ export async function updateDNSRecord(
   }
 
   try {
-    const payload: any = {};
+    const payload: Record<string, unknown> = {};
 
     if (record.name) {
       payload.name =
@@ -147,10 +150,11 @@ export async function updateDNSRecord(
       payload
     );
     return response.data.domain_record;
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const axiosError = error as { response?: { data?: { message?: string } }; message?: string };
     throw new Error(
       `Failed to update DNS record: ${
-        error.response?.data?.message || error.message
+        axiosError.response?.data?.message || axiosError.message
       }`
     );
   }
@@ -166,10 +170,11 @@ export async function deleteDNSRecord(
 
   try {
     await doClient.delete(`/domains/${domain}/records/${recordId}`);
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const axiosError = error as { response?: { data?: { message?: string } }; message?: string };
     throw new Error(
       `Failed to delete DNS record: ${
-        error.response?.data?.message || error.message
+        axiosError.response?.data?.message || axiosError.message
       }`
     );
   }
@@ -264,8 +269,9 @@ export async function setupDomainDNS(
     }
 
     return createdRecords;
-  } catch (error: any) {
-    throw new Error(`Failed to setup domain DNS: ${error.message}`);
+  } catch (error: unknown) {
+    const errorObj = error as { message?: string };
+    throw new Error(`Failed to setup domain DNS: ${errorObj.message}`);
   }
 }
 
@@ -277,7 +283,7 @@ export async function verifyDomainOwnership(domain: string): Promise<boolean> {
   try {
     const domains = await getDomains();
     return domains.some((d) => d.name === domain);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Failed to verify domain ownership:", error);
     return false;
   }

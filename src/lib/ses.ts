@@ -226,14 +226,15 @@ export async function createConfigurationSet(domain: string): Promise<string> {
     await sesClient.send(command);
 
     return configSetName;
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const awsError = error as { name?: string; message?: string; $metadata?: { httpStatusCode?: number } };
     // Handle various ways AWS might indicate the configuration set already exists
     if (
-      error.name === "AlreadyExistsException" ||
-      error.name === "ConfigurationSetAlreadyExistsException" ||
-      error.message?.includes("already exists") ||
-      error.message?.includes("Configuration set") ||
-      error.$metadata?.httpStatusCode === 409
+      awsError.name === "AlreadyExistsException" ||
+      awsError.name === "ConfigurationSetAlreadyExistsException" ||
+      awsError.message?.includes("already exists") ||
+      awsError.message?.includes("Configuration set") ||
+      awsError.$metadata?.httpStatusCode === 409
     ) {
       console.log(
         `Configuration set ${configSetName} already exists, continuing...`

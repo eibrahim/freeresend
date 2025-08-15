@@ -62,8 +62,9 @@ export async function generateApiKey(
       permissions: safeParsePermissions(data.permissions),
       key: apiKey,
     };
-  } catch (error: any) {
-    throw new Error(`Failed to create API key: ${error.message}`);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to create API key: ${errorMessage}`);
   }
 }
 
@@ -138,8 +139,9 @@ export async function getUserApiKeys(userId: string): Promise<ApiKey[]> {
       permissions: safeParsePermissions(row.permissions),
       domains: row.domain_name ? { domain: row.domain_name } : null,
     }));
-  } catch (error: any) {
-    throw new Error(`Failed to fetch API keys: ${error.message}`);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to fetch API keys: ${errorMessage}`);
   }
 }
 
@@ -156,8 +158,9 @@ export async function getDomainApiKeys(domainId: string): Promise<ApiKey[]> {
       ...row,
       permissions: safeParsePermissions(row.permissions),
     }));
-  } catch (error: any) {
-    throw new Error(`Failed to fetch domain API keys: ${error.message}`);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to fetch domain API keys: ${errorMessage}`);
   }
 }
 
@@ -174,8 +177,9 @@ export async function deleteApiKey(
     if (result.rowCount === 0) {
       throw new Error("API key not found or access denied");
     }
-  } catch (error: any) {
-    throw new Error(`Failed to delete API key: ${error.message}`);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to delete API key: ${errorMessage}`);
   }
 }
 
@@ -193,8 +197,9 @@ export async function updateApiKeyPermissions(
     if (result.rowCount === 0) {
       throw new Error("API key not found or access denied");
     }
-  } catch (error: any) {
-    throw new Error(`Failed to update API key permissions: ${error.message}`);
+  } catch (error: unknown) {
+    const errorObj = error as { message?: string };
+    throw new Error(`Failed to update API key permissions: ${errorObj.message}`);
   }
 }
 

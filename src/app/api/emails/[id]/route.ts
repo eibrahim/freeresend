@@ -37,10 +37,11 @@ function safeParseJSON(jsonData: unknown): Record<string, unknown> {
 
 async function getEmailHandler(
   req: AuthenticatedRequest,
-  context: { params: Promise<{ id: string }> }
+  context?: { params: Promise<Record<string, string>> }
 ) {
   try {
-    const params = await context.params;
+    if (!context) throw new Error('Context is required');
+    const params = await context.params as { id: string };
 
     // Get email with related data
     const emailResult = await query(

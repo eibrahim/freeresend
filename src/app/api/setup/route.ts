@@ -9,11 +9,12 @@ export async function POST() {
       success: true,
       message: "Default user initialized successfully",
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorObj = error as { message?: string };
     return NextResponse.json(
       {
         success: false,
-        error: error.message,
+        error: errorObj.message,
       },
       { status: 500 }
     );

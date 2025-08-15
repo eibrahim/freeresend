@@ -30,7 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const response = await api.getUser();
       setUser(response.data.user);
-    } catch (error) {
+    } catch {
       console.log("Not authenticated");
       api.clearToken();
     } finally {

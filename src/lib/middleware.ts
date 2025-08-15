@@ -1,17 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyJWT } from "./auth";
 import { verifyApiKey } from "./api-keys";
-import type { AuthUser, ApiKey } from "./database";
+import type { AuthUser } from "./auth";
+import type { ApiKey } from "./database";
+import { z } from "zod";
 
 export interface AuthenticatedRequest extends NextRequest {
   user?: AuthUser;
   apiKey?: ApiKey;
 }
 
-export function withAuth(
-  handler: (req: AuthenticatedRequest, context?: any) => Promise<NextResponse>
+export function withAuth<T = Record<string, string>>(
+  handler: (req: AuthenticatedRequest, context?: { params: Promise<T> }) => Promise<NextResponse>
 ) {
-  return async (req: NextRequest, context?: any) => {
+  return async (req: NextRequest, context?: { params: Promise<T> }) => {
     const authHeader = req.headers.get("authorization");
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -38,10 +40,10 @@ export function withAuth(
   };
 }
 
-export function withApiKey(
-  handler: (req: AuthenticatedRequest, context?: any) => Promise<NextResponse>
+export function withApiKey<T = Record<string, string>>(
+  handler: (req: AuthenticatedRequest, context?: { params: Promise<T> }) => Promise<NextResponse>
 ) {
-  return async (req: NextRequest, context?: any) => {
+  return async (req: NextRequest, context?: { params: Promise<T> }) => {
     const authHeader = req.headers.get("authorization");
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -87,10 +89,10 @@ export function cors(response: NextResponse): NextResponse {
   return response;
 }
 
-export function withCors(
-  handler: (req: NextRequest, context?: any) => Promise<NextResponse>
+export function withCors<T = Record<string, string>>(
+  handler: (req: NextRequest, context?: { params: Promise<T> }) => Promise<NextResponse>
 ) {
-  return async (req: NextRequest, context?: any) => {
+  return async (req: NextRequest, context?: { params: Promise<T> }) => {
     // Handle preflight requests
     if (req.method === "OPTIONS") {
       return cors(new NextResponse(null, { status: 200 }));
@@ -101,24 +103,25 @@ export function withCors(
   };
 }
 
-export function validateRequest(schema: any) {
+export function validateRequest<T, P = Record<string, string>>(schema: z.ZodSchema<T>) {
   return function (
     handler: (
       req: NextRequest,
-      body: any,
-      context?: any
+      body: T,
+      context?: { params: Promise<P> }
     ) => Promise<NextResponse>
   ) {
-    return async (req: NextRequest, context?: any) => {
+    return async (req: NextRequest, context?: { params: Promise<P> }) => {
       try {
         const body = await req.json();
         const validatedData = schema.parse(body);
         return handler(req, validatedData, context);
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const errorObj = error as { errors?: unknown; message?: string };
         return NextResponse.json(
           {
             error: "Invalid request data",
-            details: error.errors || error.message,
+            details: errorObj.errors || errorObj.message,
           },
           { status: 400 }
         );
@@ -127,20 +130,21 @@ export function validateRequest(schema: any) {
   };
 }
 
-export function handleError(error: any): NextResponse {
+export function handleError(error: unknown): NextResponse {
+  const errorObj = error as { message?: string };
   console.error("API Error:", error);
 
-  if (error.message.includes("rate limit")) {
+  if (errorObj.message?.includes("rate limit")) {
     return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
   }
 
-  if (error.message.includes("not found")) {
+  if (errorObj.message?.includes("not found")) {
     return NextResponse.json({ error: "Resource not found" }, { status: 404 });
   }
 
   if (
-    error.message.includes("unauthorized") ||
-    error.message.includes("permission")
+    errorObj.message?.includes("unauthorized") ||
+    errorObj.message?.includes("permission")
   ) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
@@ -149,7 +153,7 @@ export function handleError(error: any): NextResponse {
     {
       error: "Internal server error",
       message:
-        process.env.NODE_ENV === "development" ? error.message : undefined,
+        process.env.NODE_ENV === "development" ? errorObj.message : undefined,
     },
     { status: 500 }
   );

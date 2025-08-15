@@ -43,9 +43,10 @@ async function getEmailLogsHandler(req: AuthenticatedRequest) {
           [req.user.id]
         );
         domainIds = result.rows.map((d) => d.id);
-      } catch (domainsError) {
+      } catch (domainsError: unknown) {
+        const errorObj = domainsError as { message?: string };
         throw new Error(
-          `Failed to fetch user domains: ${domainsError.message}`
+          `Failed to fetch user domains: ${errorObj.message}`
         );
       }
     } else {
@@ -70,7 +71,7 @@ async function getEmailLogsHandler(req: AuthenticatedRequest) {
 
     // Build WHERE conditions
     const whereConditions = [`el.domain_id = ANY($1)`];
-    const queryParams: any[] = [domainIds];
+    const queryParams: (string | string[])[] = [domainIds];
 
     if (domainId) {
       whereConditions.push(`el.domain_id = $${queryParams.length + 1}`);
@@ -135,7 +136,7 @@ async function getEmailLogsHandler(req: AuthenticatedRequest) {
 }
 
 // Support both user authentication (dashboard) and API key authentication
-export const GET = withCors(async (req: NextRequest, context?: any) => {
+export const GET = withCors(async (req: NextRequest, context?: { params: Promise<Record<string, string>> }) => {
   const authHeader = req.headers.get("authorization");
 
   if (authHeader?.startsWith("Bearer frs_")) {

@@ -8,7 +8,10 @@ const loginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
-async function loginHandler(req: NextRequest, body: any, context?: any) {
+async function loginHandler(
+  req: NextRequest,
+  body: { email: string; password: string }
+) {
   try {
     const { email, password } = body;
 

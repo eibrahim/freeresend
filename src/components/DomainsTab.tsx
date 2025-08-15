@@ -7,7 +7,7 @@ interface Domain {
   id: string;
   domain: string;
   status: "pending" | "verified" | "failed";
-  dns_records: any[];
+  dns_records: Array<{ type: string; name: string; value: string; ttl?: number; description?: string }>;
   created_at: string;
 }
 
@@ -43,8 +43,9 @@ export default function DomainsTab() {
       setDomains([response.data.domain, ...domains]);
       setNewDomain("");
       setShowDNSModal(response.data.domain);
-    } catch (error: any) {
-      alert(error.message || "Failed to add domain");
+    } catch (error: unknown) {
+      const errorObj = error as { message?: string };
+      alert(errorObj.message || "Failed to add domain");
     } finally {
       setAddingDomain(false);
     }
@@ -55,8 +56,9 @@ export default function DomainsTab() {
       const response = await api.verifyDomain(domainId);
       await loadDomains(); // Refresh domains list
       alert(response.message);
-    } catch (error: any) {
-      alert(error.message || "Failed to verify domain");
+    } catch (error: unknown) {
+      const errorObj = error as { message?: string };
+      alert(errorObj.message || "Failed to verify domain");
     }
   };
 
@@ -66,8 +68,9 @@ export default function DomainsTab() {
     try {
       await api.deleteDomain(domainId);
       setDomains(domains.filter((d) => d.id !== domainId));
-    } catch (error: any) {
-      alert(error.message || "Failed to delete domain");
+    } catch (error: unknown) {
+      const errorObj = error as { message?: string };
+      alert(errorObj.message || "Failed to delete domain");
     }
   };
 
@@ -209,7 +212,7 @@ export default function DomainsTab() {
               </p>
 
               <div className="space-y-4">
-                {showDNSModal.dns_records?.map((record: any, index: number) => (
+                {showDNSModal.dns_records?.map((record: { type: string; name: string; value: string; ttl?: number; description?: string }, index: number) => (
                   <div key={index} className="bg-gray-50 p-4 rounded-lg">
                     <div className="grid grid-cols-3 gap-4 text-sm">
                       <div>

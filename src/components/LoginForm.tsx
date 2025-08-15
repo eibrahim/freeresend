@@ -18,8 +18,9 @@ export default function LoginForm() {
 
     try {
       await login(email, password);
-    } catch (err: any) {
-      setError(err.message || "Login failed");
+    } catch (err: unknown) {
+      const errorObj = err as { message?: string };
+      setError(errorObj.message || "Login failed");
     } finally {
       setLoading(false);
     }

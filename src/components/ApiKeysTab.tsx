@@ -71,8 +71,9 @@ export default function ApiKeysTab() {
       setCreatedKey(response.data.apiKey.key);
       setNewKey({ domainId: "", keyName: "", permissions: ["send"] });
       setShowCreateForm(false);
-    } catch (error: any) {
-      alert(error.message || "Failed to create API key");
+    } catch (error: unknown) {
+      const errorObj = error as { message?: string };
+      alert(errorObj.message || "Failed to create API key");
     } finally {
       setCreating(false);
     }
@@ -89,8 +90,9 @@ export default function ApiKeysTab() {
     try {
       await api.deleteApiKey(keyId);
       setApiKeys(apiKeys.filter((k) => k.id !== keyId));
-    } catch (error: any) {
-      alert(error.message || "Failed to delete API key");
+    } catch (error: unknown) {
+      const errorObj = error as { message?: string };
+      alert(errorObj.message || "Failed to delete API key");
     }
   };
 

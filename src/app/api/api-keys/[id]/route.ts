@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { z } from "zod";
 import {
   withAuth,
@@ -17,11 +17,12 @@ const updateApiKeySchema = z.object({
 
 async function updateApiKeyHandler(
   req: AuthenticatedRequest,
-  body: any,
-  context: { params: Promise<{ id: string }> }
+  body: { permissions: string[] },
+  context?: { params: Promise<Record<string, string>> }
 ) {
   try {
-    const params = await context.params;
+    if (!context) throw new Error('Context is required');
+    const params = await context.params as { id: string };
     const { permissions } = body;
 
     await updateApiKeyPermissions(params.id, req.user!.id, permissions);
@@ -37,10 +38,11 @@ async function updateApiKeyHandler(
 
 async function deleteApiKeyHandler(
   req: AuthenticatedRequest,
-  context: { params: Promise<{ id: string }> }
+  context?: { params: Promise<Record<string, string>> }
 ) {
   try {
-    const params = await context.params;
+    if (!context) throw new Error('Context is required');
+    const params = await context.params as { id: string };
     await deleteApiKey(params.id, req.user!.id);
 
     return NextResponse.json({

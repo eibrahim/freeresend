@@ -1,14 +1,15 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { withAuth, withCors, handleError } from "@/lib/middleware";
 import { getDomainById, checkDomainVerification } from "@/lib/domains";
 import type { AuthenticatedRequest } from "@/lib/middleware";
 
 async function verifyDomainHandler(
   req: AuthenticatedRequest,
-  context: { params: Promise<{ id: string }> }
+  context?: { params: Promise<Record<string, string>> }
 ) {
   try {
-    const params = await context.params;
+    if (!context) throw new Error('Context is required');
+    const params = await context.params as { id: string };
     const domain = await getDomainById(params.id);
 
     if (!domain || domain.user_id !== req.user!.id) {

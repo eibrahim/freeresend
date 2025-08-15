@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { z } from "zod";
 import {
   withApiKey,
@@ -7,7 +7,7 @@ import {
   handleError,
 } from "@/lib/middleware";
 import { sendEmail } from "@/lib/ses";
-import { getDomainById, validateEmailDomain } from "@/lib/domains";
+import { getDomainById } from "@/lib/domains";
 import { query } from "@/lib/database";
 import type { AuthenticatedRequest } from "@/lib/middleware";
 
@@ -36,10 +36,22 @@ const sendEmailSchema = z
     message: "Either html or text content is required",
   });
 
+type EmailBody = {
+  from: string;
+  to: string[] | string;
+  cc?: string[] | string;
+  bcc?: string[] | string;
+  subject?: string;
+  html?: string;
+  text?: string;
+  attachments?: Array<{ filename: string; content: string; contentType?: string }>;
+  reply_to?: string[] | string;
+  tags?: Record<string, string>;
+};
+
 async function sendEmailHandler(
   req: AuthenticatedRequest,
-  body: any,
-  context?: any
+  body: EmailBody
 ) {
   try {
     const {
@@ -86,17 +98,30 @@ async function sendEmailHandler(
       );
     }
 
+    // Convert arrays and prepare data for SES
+    const toArray = Array.isArray(to) ? to : [to];
+    const ccArray = cc ? (Array.isArray(cc) ? cc : [cc]) : undefined;
+    const bccArray = bcc ? (Array.isArray(bcc) ? bcc : [bcc]) : undefined;
+    const replyToArray = reply_to ? (Array.isArray(reply_to) ? reply_to : [reply_to]) : undefined;
+    
+    // Convert attachments to match EmailAttachment interface
+    const sesAttachments = attachments?.map(att => ({
+      filename: att.filename,
+      content: att.content,
+      contentType: att.contentType || 'application/octet-stream'
+    }));
+
     // Send email via SES
     const messageId = await sendEmail({
       from,
-      to,
-      cc,
-      bcc,
-      subject,
+      to: toArray,
+      cc: ccArray,
+      bcc: bccArray,
+      subject: subject || '',
       html,
       text,
-      attachments,
-      replyTo: reply_to,
+      attachments: sesAttachments,
+      replyTo: replyToArray,
       tags,
     });
 
@@ -135,7 +160,7 @@ async function sendEmailHandler(
       to,
       created_at: new Date().toISOString(),
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Log failed email attempt
     try {
       await query(
@@ -155,7 +180,7 @@ async function sendEmailHandler(
           body?.text,
           JSON.stringify(body?.attachments || []),
           "failed",
-          error.message,
+          (error as { message?: string }).message || "Unknown error",
         ]
       );
     } catch (logError) {

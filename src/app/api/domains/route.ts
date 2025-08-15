@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { z } from "zod";
 import {
   withAuth,
@@ -26,7 +26,10 @@ async function getDomainsHandler(req: AuthenticatedRequest) {
   }
 }
 
-async function addDomainHandler(req: AuthenticatedRequest, body: any, context?: any) {
+async function addDomainHandler(
+  req: AuthenticatedRequest,
+  body: { domain: string }
+) {
   try {
     const { domain } = body;
 

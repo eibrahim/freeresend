@@ -2,19 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { withCors, handleError } from "@/lib/middleware";
 import { query } from "@/lib/database";
 
-interface SESEvent {
-  Type: string;
-  MessageId: string;
-  TopicArn: string;
-  Subject: string;
-  Message: string;
-  Timestamp: string;
-  SignatureVersion: string;
-  Signature: string;
-  SigningCertURL: string;
-  UnsubscribeURL: string;
-}
-
 interface SESMessage {
   eventType: "send" | "delivery" | "bounce" | "complaint" | "reject";
   mail: {

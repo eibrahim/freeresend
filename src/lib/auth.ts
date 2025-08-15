@@ -36,7 +36,7 @@ export function generateJWT(user: AuthUser): string {
 
 export function verifyJWT(token: string): AuthUser | null {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as any;
+    const decoded = jwt.verify(token, JWT_SECRET) as { id: string; email: string; name?: string };
     return {
       id: decoded.id,
       email: decoded.email,
@@ -67,8 +67,9 @@ export async function createUser(
     }
 
     return result.rows[0];
-  } catch (error: any) {
-    throw new Error(`Failed to create user: ${error.message}`);
+  } catch (error: unknown) {
+    const errorObj = error as { message?: string };
+    throw new Error(`Failed to create user: ${errorObj.message}`);
   }
 }
 

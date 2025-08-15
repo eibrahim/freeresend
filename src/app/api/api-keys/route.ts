@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { z } from "zod";
 import {
   withAuth,
@@ -13,7 +13,7 @@ import type { AuthenticatedRequest } from "@/lib/middleware";
 const createApiKeySchema = z.object({
   domainId: z.string().uuid("Invalid domain ID"),
   keyName: z.string().min(1, "Key name is required"),
-  permissions: z.array(z.string()).default(["send"]),
+  permissions: z.array(z.string()).optional().default(["send"]),
 });
 
 async function getApiKeysHandler(req: AuthenticatedRequest) {
@@ -29,9 +29,12 @@ async function getApiKeysHandler(req: AuthenticatedRequest) {
   }
 }
 
-async function createApiKeyHandler(req: AuthenticatedRequest, body: any, context?: any) {
+async function createApiKeyHandler(
+  req: AuthenticatedRequest,
+  body: { domainId: string; keyName: string; permissions?: string[] }
+) {
   try {
-    const { domainId, keyName, permissions } = body;
+    const { domainId, keyName, permissions = ["send"] } = body;
 
     // Verify domain belongs to user
     const domain = await getDomainById(domainId);

@@ -16,7 +16,7 @@ const pool = new Pool({
 export { pool as db };
 
 // Helper function for single queries
-export async function query(text: string, params?: any[]) {
+export async function query(text: string, params?: unknown[]) {
   const client = await pool.connect();
   try {
     const result = await client.query(text, params);
@@ -63,7 +63,7 @@ export interface Domain {
   verification_token?: string;
   ses_configuration_set?: string;
   do_domain_id?: string;
-  dns_records: any[];
+  dns_records: unknown[];
   created_at: string;
   updated_at: string;
 }
@@ -93,7 +93,7 @@ export interface EmailLog {
   subject?: string;
   html_content?: string;
   text_content?: string;
-  attachments: any[];
+  attachments: unknown[];
   status:
     | "pending"
     | "sent"
@@ -103,7 +103,7 @@ export interface EmailLog {
     | "complained";
   ses_message_id?: string;
   error_message?: string;
-  webhook_data?: any;
+  webhook_data?: unknown;
   created_at: string;
   updated_at: string;
 }
@@ -112,7 +112,7 @@ export interface WebhookEvent {
   id: string;
   email_log_id: string;
   event_type: string;
-  event_data: any;
+  event_data: unknown;
   processed: boolean;
   created_at: string;
 }

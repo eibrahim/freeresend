@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { api } from "@/lib/api";
 
 interface EmailLog {
@@ -18,6 +18,9 @@ interface EmailLog {
   created_at: string;
   domains?: { domain: string };
   api_keys?: { key_name: string };
+  html_content?: string;
+  text_content?: string;
+  error_message?: string;
 }
 
 interface Domain {
@@ -29,7 +32,7 @@ export default function EmailLogsTab() {
   const [emails, setEmails] = useState<EmailLog[]>([]);
   const [domains, setDomains] = useState<Domain[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedEmail, setSelectedEmail] = useState<any>(null);
+  const [selectedEmail, setSelectedEmail] = useState<EmailLog | null>(null);
   const [filters, setFilters] = useState({
     domain_id: "",
     status: "",
@@ -43,14 +46,6 @@ export default function EmailLogsTab() {
     totalPages: 0,
   });
 
-  useEffect(() => {
-    loadDomains();
-  }, []);
-
-  useEffect(() => {
-    loadEmails();
-  }, [filters]);
-
   const loadDomains = async () => {
     try {
       const response = await api.getDomains();
@@ -60,11 +55,11 @@ export default function EmailLogsTab() {
     }
   };
 
-  const loadEmails = async () => {
+  const loadEmails = useCallback(async () => {
     setLoading(true);
     try {
       const params = Object.fromEntries(
-        Object.entries(filters).filter(([_, value]) => value !== "")
+        Object.entries(filters).filter(([, value]) => value !== "")
       );
       const response = await api.getEmailLogs(params);
       setEmails(response.data.emails);
@@ -74,14 +69,23 @@ export default function EmailLogsTab() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
+
+  useEffect(() => {
+    loadDomains();
+  }, []);
+
+  useEffect(() => {
+    loadEmails();
+  }, [loadEmails]);
 
   const handleEmailClick = async (emailId: string) => {
     try {
       const response = await api.getEmail(emailId);
       setSelectedEmail(response.data.email);
-    } catch (error: any) {
-      alert(error.message || "Failed to load email details");
+    } catch (error: unknown) {
+      const errorObj = error as { message?: string };
+      alert(errorObj.message || "Failed to load email details");
     }
   };
 
