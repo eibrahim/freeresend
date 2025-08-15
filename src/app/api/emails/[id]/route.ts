@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withAuth, withCors, handleError } from "@/lib/middleware";
-import { supabaseAdmin } from "@/lib/supabase";
+import { query } from "@/lib/database";
 import type { AuthenticatedRequest } from "@/lib/middleware";
 
 async function getEmailHandler(
@@ -9,37 +9,60 @@ async function getEmailHandler(
 ) {
   try {
     const params = await context.params;
-    const { data: email, error } = await supabaseAdmin
-      .from("email_logs")
-      .select(
-        `
-        *,
-        domains (
-          domain,
-          user_id
-        ),
-        api_keys (
-          key_name
-        ),
-        webhook_events (
-          id,
-          event_type,
-          event_data,
-          created_at
-        )
-      `
-      )
-      .eq("id", params.id)
-      .single();
 
-    if (error || !email) {
+    // Get email with related data
+    const emailResult = await query(
+      `SELECT 
+        el.*,
+        d.domain as domain_name,
+        d.user_id as domain_user_id,
+        ak.key_name as api_key_name
+      FROM email_logs el
+      LEFT JOIN domains d ON el.domain_id = d.id
+      LEFT JOIN api_keys ak ON el.api_key_id = ak.id
+      WHERE el.id = $1`,
+      [params.id]
+    );
+
+    if (emailResult.rows.length === 0) {
       return NextResponse.json({ error: "Email not found" }, { status: 404 });
     }
+
+    const emailData = emailResult.rows[0];
 
     // Check if user owns this email log
-    if (email.domains.user_id !== req.user!.id) {
+    if (emailData.domain_user_id !== req.user!.id) {
       return NextResponse.json({ error: "Email not found" }, { status: 404 });
     }
+
+    // Get webhook events for this email
+    const webhookResult = await query(
+      `SELECT id, event_type, event_data, created_at 
+       FROM webhook_events 
+       WHERE email_log_id = $1 
+       ORDER BY created_at DESC`,
+      [params.id]
+    );
+
+    // Format the response to match original structure
+    const email = {
+      ...emailData,
+      to_emails: JSON.parse(emailData.to_emails || "[]"),
+      cc_emails: JSON.parse(emailData.cc_emails || "[]"),
+      bcc_emails: JSON.parse(emailData.bcc_emails || "[]"),
+      attachments: JSON.parse(emailData.attachments || "[]"),
+      domains: {
+        domain: emailData.domain_name,
+        user_id: emailData.domain_user_id,
+      },
+      api_keys: emailData.api_key_name
+        ? { key_name: emailData.api_key_name }
+        : null,
+      webhook_events: webhookResult.rows.map((row) => ({
+        ...row,
+        event_data: JSON.parse(row.event_data || "{}"),
+      })),
+    };
 
     return NextResponse.json({
       success: true,

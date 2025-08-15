@@ -1,4 +1,4 @@
-import { supabaseAdmin } from "./supabase";
+import { query } from "./database";
 import {
   verifyDomain,
   getDomainVerificationStatus,
@@ -8,7 +8,7 @@ import {
   getDomainDkimTokens,
 } from "./ses";
 import { setupDomainDNS, verifyDomainOwnership } from "./digitalocean";
-import type { Domain } from "./supabase";
+import type { Domain } from "./database";
 
 export interface DomainSetupResult {
   domain: Domain;
@@ -28,12 +28,7 @@ export async function addDomain(
   }
 
   // Check if domain already exists
-  const { data: existingDomain } = await supabaseAdmin
-    .from("domains")
-    .select("*")
-    .eq("domain", domainName)
-    .single();
-
+  const existingDomain = await getDomainByName(domainName);
   if (existingDomain) {
     throw new Error("Domain already exists");
   }
@@ -85,23 +80,29 @@ export async function addDomain(
         "DNS records need to be created manually. Please add the following records to your DNS provider:";
     }
 
-    // 5. Create domain record in database
-    const { data: domain, error } = await supabaseAdmin
-      .from("domains")
-      .insert({
-        user_id: userId,
-        domain: domainName,
-        status: "pending",
-        ses_configuration_set: configurationSet,
-        dns_records: dnsRecords,
-        verification_token: sesVerification.verificationToken,
-      })
-      .select()
-      .single();
+    // 6. Store domain information in Supabase
+    const result = await query(
+      `INSERT INTO domains (user_id, domain, status, ses_configuration_set, dns_records, ses_verification_token) 
+       VALUES ($1, $2, $3, $4, $5, $6) 
+       RETURNING *`,
+      [
+        userId,
+        domainName,
+        "pending",
+        configurationSet,
+        JSON.stringify(dnsRecords),
+        sesVerification.verificationToken,
+      ]
+    );
 
-    if (error) {
-      throw new Error(`Failed to create domain record: ${error.message}`);
+    if (result.rows.length === 0) {
+      throw new Error("Failed to create domain record");
     }
+
+    const domain = {
+      ...result.rows[0],
+      dns_records: JSON.parse(result.rows[0].dns_records),
+    };
 
     return {
       domain,
@@ -116,62 +117,82 @@ export async function addDomain(
 }
 
 export async function getUserDomains(userId: string): Promise<Domain[]> {
-  const { data, error } = await supabaseAdmin
-    .from("domains")
-    .select("*")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false });
+  try {
+    const result = await query(
+      `SELECT * FROM domains 
+       WHERE user_id = $1 
+       ORDER BY created_at DESC`,
+      [userId]
+    );
 
-  if (error) {
+    return result.rows.map((row) => ({
+      ...row,
+      dns_records: JSON.parse(row.dns_records || "[]"),
+    }));
+  } catch (error: any) {
     throw new Error(`Failed to fetch domains: ${error.message}`);
   }
-
-  return data || [];
 }
 
 export async function getDomainById(domainId: string): Promise<Domain | null> {
-  const { data, error } = await supabaseAdmin
-    .from("domains")
-    .select("*")
-    .eq("id", domainId)
-    .single();
+  try {
+    const result = await query("SELECT * FROM domains WHERE id = $1 LIMIT 1", [
+      domainId,
+    ]);
 
-  if (error) {
+    if (result.rows.length === 0) {
+      return null;
+    }
+
+    const domain = result.rows[0];
+    return {
+      ...domain,
+      dns_records: JSON.parse(domain.dns_records || "[]"),
+    };
+  } catch (error) {
+    console.error("Get domain by ID error:", error);
     return null;
   }
-
-  return data;
 }
 
 export async function getDomainByName(
   domainName: string
 ): Promise<Domain | null> {
-  const { data, error } = await supabaseAdmin
-    .from("domains")
-    .select("*")
-    .eq("domain", domainName)
-    .single();
+  try {
+    const result = await query(
+      "SELECT * FROM domains WHERE domain = $1 LIMIT 1",
+      [domainName]
+    );
 
-  if (error) {
+    if (result.rows.length === 0) {
+      return null;
+    }
+
+    const domain = result.rows[0];
+    return {
+      ...domain,
+      dns_records: JSON.parse(domain.dns_records || "[]"),
+    };
+  } catch (error) {
+    console.error("Get domain by name error:", error);
     return null;
   }
-
-  return data;
 }
 
 export async function updateDomainStatus(
   domainId: string,
   status: Domain["status"]
 ): Promise<void> {
-  const { error } = await supabaseAdmin
-    .from("domains")
-    .update({
+  try {
+    const result = await query("UPDATE domains SET status = $1 WHERE id = $2", [
       status,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", domainId);
+      domainId,
+    ]);
 
-  if (error) {
+    if (result.rowCount === 0) {
+      throw new Error("Domain not found");
+    }
+  } catch (error: any) {
     throw new Error(`Failed to update domain status: ${error.message}`);
   }
 }
@@ -219,17 +240,16 @@ export async function deleteDomain(
     // await deleteDomainIdentity(domain.domain)
 
     // Delete API keys associated with this domain
-    await supabaseAdmin.from("api_keys").delete().eq("domain_id", domainId);
+    await query("DELETE FROM api_keys WHERE domain_id = $1", [domainId]);
 
     // Delete domain record
-    const { error } = await supabaseAdmin
-      .from("domains")
-      .delete()
-      .eq("id", domainId)
-      .eq("user_id", userId);
+    const result = await query(
+      "DELETE FROM domains WHERE id = $1 AND user_id = $2",
+      [domainId, userId]
+    );
 
-    if (error) {
-      throw new Error(`Failed to delete domain: ${error.message}`);
+    if (result.rowCount === 0) {
+      throw new Error("Domain not found or unauthorized");
     }
   } catch (error: any) {
     throw new Error(`Failed to delete domain: ${error.message}`);
@@ -237,27 +257,25 @@ export async function deleteDomain(
 }
 
 export async function refreshAllDomainStatuses(): Promise<void> {
-  const { data: domains, error } = await supabaseAdmin
-    .from("domains")
-    .select("id, domain, status")
-    .eq("status", "pending");
+  try {
+    const result = await query(
+      "SELECT id, domain, status FROM domains WHERE status = 'pending'"
+    );
 
-  if (error || !domains) {
-    console.error("Failed to fetch pending domains:", error);
-    return;
-  }
-
-  for (const domain of domains) {
-    try {
-      await checkDomainVerification(domain.id);
-      // Small delay to avoid rate limiting
-      await new Promise((resolve) => setTimeout(resolve, 100));
-    } catch (error) {
-      console.error(
-        `Failed to check verification for domain ${domain.domain}:`,
-        error
-      );
+    for (const domain of result.rows) {
+      try {
+        await checkDomainVerification(domain.id);
+        // Small delay to avoid rate limiting
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      } catch (error) {
+        console.error(
+          `Failed to check verification for domain ${domain.domain}:`,
+          error
+        );
+      }
     }
+  } catch (error) {
+    console.error("Failed to fetch pending domains:", error);
   }
 }
 

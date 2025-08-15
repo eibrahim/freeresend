@@ -8,7 +8,7 @@ import {
 } from "@/lib/middleware";
 import { sendEmail } from "@/lib/ses";
 import { getDomainById, validateEmailDomain } from "@/lib/domains";
-import { supabaseAdmin } from "@/lib/supabase";
+import { query } from "@/lib/database";
 import type { AuthenticatedRequest } from "@/lib/middleware";
 
 const attachmentSchema = z.object({
@@ -36,7 +36,11 @@ const sendEmailSchema = z
     message: "Either html or text content is required",
   });
 
-async function sendEmailHandler(req: AuthenticatedRequest, body: any, context?: any) {
+async function sendEmailHandler(
+  req: AuthenticatedRequest,
+  body: any,
+  context?: any
+) {
   try {
     const {
       from,
@@ -97,26 +101,31 @@ async function sendEmailHandler(req: AuthenticatedRequest, body: any, context?: 
     });
 
     // Log email in database
-    const { data: emailLog, error: logError } = await supabaseAdmin
-      .from("email_logs")
-      .insert({
-        api_key_id: apiKey.id,
-        domain_id: domain.id,
-        from_email: from,
-        to_emails: to,
-        cc_emails: cc || [],
-        bcc_emails: bcc || [],
-        subject,
-        html_content: html,
-        text_content: text,
-        attachments: attachments || [],
-        status: "sent",
-        ses_message_id: messageId,
-      })
-      .select()
-      .single();
-
-    if (logError) {
+    let emailLog = null;
+    try {
+      const result = await query(
+        `INSERT INTO email_logs (
+          api_key_id, domain_id, from_email, to_emails, cc_emails, bcc_emails,
+          subject, html_content, text_content, attachments, status, ses_message_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        RETURNING *`,
+        [
+          apiKey.id,
+          domain.id,
+          from,
+          JSON.stringify(to),
+          JSON.stringify(cc || []),
+          JSON.stringify(bcc || []),
+          subject,
+          html,
+          text,
+          JSON.stringify(attachments || []),
+          "sent",
+          messageId,
+        ]
+      );
+      emailLog = result.rows[0];
+    } catch (logError) {
       console.error("Failed to log email:", logError);
     }
 
@@ -129,20 +138,26 @@ async function sendEmailHandler(req: AuthenticatedRequest, body: any, context?: 
   } catch (error: any) {
     // Log failed email attempt
     try {
-      await supabaseAdmin.from("email_logs").insert({
-        api_key_id: req.apiKey?.id,
-        domain_id: req.apiKey?.domain_id,
-        from_email: body?.from || "",
-        to_emails: body?.to || [],
-        cc_emails: body?.cc || [],
-        bcc_emails: body?.bcc || [],
-        subject: body?.subject || "",
-        html_content: body?.html,
-        text_content: body?.text,
-        attachments: body?.attachments || [],
-        status: "failed",
-        error_message: error.message,
-      });
+      await query(
+        `INSERT INTO email_logs (
+          api_key_id, domain_id, from_email, to_emails, cc_emails, bcc_emails,
+          subject, html_content, text_content, attachments, status, error_message
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+        [
+          req.apiKey?.id,
+          req.apiKey?.domain_id,
+          body?.from || "",
+          JSON.stringify(body?.to || []),
+          JSON.stringify(body?.cc || []),
+          JSON.stringify(body?.bcc || []),
+          body?.subject || "",
+          body?.html,
+          body?.text,
+          JSON.stringify(body?.attachments || []),
+          "failed",
+          error.message,
+        ]
+      );
     } catch (logError) {
       console.error("Failed to log failed email:", logError);
     }

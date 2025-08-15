@@ -25,7 +25,7 @@ FreeResend allows you to host your own email service using Amazon SES and option
 ### Prerequisites
 
 - Node.js 18+
-- A Supabase project (for database)
+- PostgreSQL database (local or hosted)
 - Amazon AWS account with SES access
 - Digital Ocean account (optional, for automatic DNS management)
 
@@ -52,10 +52,8 @@ Edit `.env.local` with your configuration:
 NEXTAUTH_URL=http://localhost:3000
 NEXTAUTH_SECRET=your-super-secret-jwt-key-here
 
-# Database Configuration (Supabase)
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
+# Database Configuration (PostgreSQL)
+DATABASE_URL=postgresql://username:password@hostname:port/database
 
 # AWS SES Configuration
 AWS_REGION=us-east-1

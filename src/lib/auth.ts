@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { supabaseAdmin } from "./supabase";
-import type { User } from "./supabase";
+import { query } from "./database";
+import type { User } from "./database";
 
 const JWT_SECRET = process.env.NEXTAUTH_SECRET!;
 
@@ -54,61 +54,70 @@ export async function createUser(
 ): Promise<User> {
   const passwordHash = await hashPassword(password);
 
-  const { data, error } = await supabaseAdmin
-    .from("users")
-    .insert({
-      email,
-      password_hash: passwordHash,
-      name,
-    })
-    .select()
-    .single();
+  try {
+    const result = await query(
+      `INSERT INTO users (email, password_hash, name) 
+       VALUES ($1, $2, $3) 
+       RETURNING *`,
+      [email, passwordHash, name]
+    );
 
-  if (error) {
+    if (result.rows.length === 0) {
+      throw new Error("Failed to create user");
+    }
+
+    return result.rows[0];
+  } catch (error: any) {
     throw new Error(`Failed to create user: ${error.message}`);
   }
-
-  return data;
 }
 
 export async function authenticateUser(
   email: string,
   password: string
 ): Promise<AuthUser | null> {
-  const { data: user, error } = await supabaseAdmin
-    .from("users")
-    .select("*")
-    .eq("email", email)
-    .single();
+  try {
+    const result = await query("SELECT * FROM users WHERE email = $1 LIMIT 1", [
+      email,
+    ]);
 
-  if (error || !user) {
+    if (result.rows.length === 0) {
+      return null;
+    }
+
+    const user = result.rows[0];
+    const isValid = await verifyPassword(password, user.password_hash);
+    if (!isValid) {
+      return null;
+    }
+
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+    };
+  } catch (error) {
+    console.error("Authentication error:", error);
     return null;
   }
-
-  const isValid = await verifyPassword(password, user.password_hash);
-  if (!isValid) {
-    return null;
-  }
-
-  return {
-    id: user.id,
-    email: user.email,
-    name: user.name,
-  };
 }
 
 export async function getUserById(id: string): Promise<AuthUser | null> {
-  const { data: user, error } = await supabaseAdmin
-    .from("users")
-    .select("id, email, name")
-    .eq("id", id)
-    .single();
+  try {
+    const result = await query(
+      "SELECT id, email, name FROM users WHERE id = $1 LIMIT 1",
+      [id]
+    );
 
-  if (error || !user) {
+    if (result.rows.length === 0) {
+      return null;
+    }
+
+    return result.rows[0];
+  } catch (error) {
+    console.error("Get user by ID error:", error);
     return null;
   }
-
-  return user;
 }
 
 export async function initializeDefaultUser(): Promise<void> {
@@ -122,19 +131,18 @@ export async function initializeDefaultUser(): Promise<void> {
     return;
   }
 
-  // Check if user already exists
-  const { data: existingUser } = await supabaseAdmin
-    .from("users")
-    .select("id")
-    .eq("email", adminEmail)
-    .single();
-
-  if (existingUser) {
-    console.log("Default admin user already exists");
-    return;
-  }
-
   try {
+    // Check if user already exists
+    const result = await query(
+      "SELECT id FROM users WHERE email = $1 LIMIT 1",
+      [adminEmail]
+    );
+
+    if (result.rows.length > 0) {
+      console.log("Default admin user already exists");
+      return;
+    }
+
     await createUser(adminEmail, adminPassword, "Admin");
     console.log("Default admin user created successfully");
   } catch (error) {

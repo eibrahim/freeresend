@@ -31,7 +31,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-ses": "^3.682.0",
-    "@supabase/supabase-js": "^2.45.1",
+    "@types/pg": "^8.15.5",
     "axios": "^1.7.9",
     "bcryptjs": "^2.4.3",
     "jose": "^5.9.6",
@@ -39,6 +39,7 @@
     "nanoid": "^5.0.9",
     "next": "15.4.6",
     "next-auth": "^4.24.10",
+    "pg": "^8.16.3",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "resend": "^6.0.1",

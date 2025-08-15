@@ -85,25 +85,33 @@ CREATE INDEX IF NOT EXISTS idx_email_logs_created_at ON email_logs(created_at);
 CREATE INDEX IF NOT EXISTS idx_webhook_events_email_log_id ON webhook_events(email_log_id);
 CREATE INDEX IF NOT EXISTS idx_webhook_events_processed ON webhook_events(processed);
 
--- Enable Row Level Security
-ALTER TABLE users ENABLE ROW LEVEL SECURITY;
-ALTER TABLE domains ENABLE ROW LEVEL SECURITY;
-ALTER TABLE api_keys ENABLE ROW LEVEL SECURITY;
-ALTER TABLE email_logs ENABLE ROW LEVEL SECURITY;
-ALTER TABLE webhook_events ENABLE ROW LEVEL SECURITY;
+-- Trigger function to automatically update updated_at timestamps
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
 
--- RLS Policies (for future multi-user support if needed)
-CREATE POLICY "Users can view own data" ON users FOR ALL USING (auth.uid() = id);
-CREATE POLICY "Users can view own domains" ON domains FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Users can view own API keys" ON api_keys FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Users can view own email logs" ON email_logs FOR SELECT USING (
-  domain_id IN (SELECT id FROM domains WHERE user_id = auth.uid())
-);
-CREATE POLICY "API keys can insert email logs" ON email_logs FOR INSERT WITH CHECK (true);
-CREATE POLICY "Users can view own webhook events" ON webhook_events FOR SELECT USING (
-  email_log_id IN (
-    SELECT id FROM email_logs WHERE domain_id IN (
-      SELECT id FROM domains WHERE user_id = auth.uid()
-    )
-  )
-);
+-- Create triggers for updated_at automation
+CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users 
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_domains_updated_at BEFORE UPDATE ON domains 
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_api_keys_updated_at BEFORE UPDATE ON api_keys 
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_email_logs_updated_at BEFORE UPDATE ON email_logs 
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Initial data: Create default admin user (password: changeme123)
+-- Note: Change this password after first login!
+INSERT INTO users (email, password_hash, name) 
+VALUES (
+  'admin@freeresend.com', 
+  '$2b$10$rHOuGCOB2xzvf1YqnHjlUuB9AKnp.xeL0JOV5E7zlM1QIFhW7qYGS', 
+  'Admin User'
+) ON CONFLICT (email) DO NOTHING;

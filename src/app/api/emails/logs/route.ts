@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withAuth, withApiKey, withCors, handleError } from "@/lib/middleware";
-import { supabaseAdmin } from "@/lib/supabase";
+import { query } from "@/lib/database";
 import type { AuthenticatedRequest } from "@/lib/middleware";
 
 async function getEmailLogsHandler(req: AuthenticatedRequest) {
@@ -21,18 +21,17 @@ async function getEmailLogsHandler(req: AuthenticatedRequest) {
       domainIds = [req.apiKey.domain_id];
     } else if (req.user) {
       // User authentication - get all user's domains
-      const { data: userDomains, error: domainsError } = await supabaseAdmin
-        .from("domains")
-        .select("id")
-        .eq("user_id", req.user.id);
-
-      if (domainsError) {
+      try {
+        const result = await query(
+          "SELECT id FROM domains WHERE user_id = $1",
+          [req.user.id]
+        );
+        domainIds = result.rows.map((d) => d.id);
+      } catch (domainsError) {
         throw new Error(
           `Failed to fetch user domains: ${domainsError.message}`
         );
       }
-
-      domainIds = userDomains?.map((d) => d.id) || [];
     } else {
       throw new Error("Authentication required");
     }
@@ -53,46 +52,64 @@ async function getEmailLogsHandler(req: AuthenticatedRequest) {
       });
     }
 
-    let query = supabaseAdmin
-      .from("email_logs")
-      .select(
-        `
-        *,
-        domains (
-          domain
-        ),
-        api_keys (
-          key_name
-        )
-      `
-      )
-      .in("domain_id", domainIds)
-      .order("created_at", { ascending: false })
-      .range(offset, offset + limit - 1);
+    // Build WHERE conditions
+    const whereConditions = [`el.domain_id = ANY($1)`];
+    const queryParams: any[] = [domainIds];
 
     if (domainId) {
-      query = query.eq("domain_id", domainId);
+      whereConditions.push(`el.domain_id = $${queryParams.length + 1}`);
+      queryParams.push(domainId);
     }
 
     if (status) {
-      query = query.eq("status", status);
+      whereConditions.push(`el.status = $${queryParams.length + 1}`);
+      queryParams.push(status);
     }
 
-    const { data: emailLogs, error, count } = await query;
+    const whereClause = whereConditions.join(" AND ");
 
-    if (error) {
-      throw new Error(`Failed to fetch email logs: ${error.message}`);
-    }
+    // Get total count for pagination
+    const countResult = await query(
+      `SELECT COUNT(*) as count FROM email_logs el WHERE ${whereClause}`,
+      queryParams
+    );
+    const totalCount = parseInt(countResult.rows[0].count);
+
+    // Get email logs with JOINs
+    const emailLogsResult = await query(
+      `SELECT 
+        el.*,
+        d.domain as domain_name,
+        ak.key_name as api_key_name
+      FROM email_logs el
+      LEFT JOIN domains d ON el.domain_id = d.id
+      LEFT JOIN api_keys ak ON el.api_key_id = ak.id
+      WHERE ${whereClause}
+      ORDER BY el.created_at DESC
+      LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}`,
+      [...queryParams, limit, offset]
+    );
+
+    // Parse JSON fields and format data
+    const emailLogs = emailLogsResult.rows.map((row) => ({
+      ...row,
+      to_emails: JSON.parse(row.to_emails || "[]"),
+      cc_emails: JSON.parse(row.cc_emails || "[]"),
+      bcc_emails: JSON.parse(row.bcc_emails || "[]"),
+      attachments: JSON.parse(row.attachments || "[]"),
+      domains: row.domain_name ? { domain: row.domain_name } : null,
+      api_keys: row.api_key_name ? { key_name: row.api_key_name } : null,
+    }));
 
     return NextResponse.json({
       success: true,
       data: {
-        emails: emailLogs || [],
+        emails: emailLogs,
         pagination: {
           page,
           limit,
-          total: count || 0,
-          totalPages: Math.ceil((count || 0) / limit),
+          total: totalCount,
+          totalPages: Math.ceil(totalCount / limit),
         },
       },
     });

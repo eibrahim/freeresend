@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyJWT } from "./auth";
 import { verifyApiKey } from "./api-keys";
-import type { AuthUser, ApiKey } from "./supabase";
+import type { AuthUser, ApiKey } from "./database";
 
 export interface AuthenticatedRequest extends NextRequest {
   user?: AuthUser;

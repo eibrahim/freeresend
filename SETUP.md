@@ -4,14 +4,34 @@ This guide will help you set up FreeResend from scratch.
 
 ## 1. Prerequisites Setup
 
-### Supabase Database
+### PostgreSQL Database
 
-1. Create a new project at [supabase.com](https://supabase.com)
-2. Go to Settings → API and copy:
-   - Project URL
-   - `anon` public key
-   - `service_role` secret key
-3. Go to SQL Editor and run the contents of `database.sql`
+1. **Option A: Local PostgreSQL**
+
+   ```bash
+   # Install PostgreSQL (macOS)
+   brew install postgresql
+   brew services start postgresql
+
+   # Create database
+   createdb freeresend
+   ```
+
+2. **Option B: Hosted PostgreSQL**
+
+   - Digital Ocean Managed Databases
+   - AWS RDS
+   - Google Cloud SQL
+   - Or any PostgreSQL-compatible service
+
+3. **Initialize database schema:**
+
+   ```bash
+   # Run the schema
+   psql $DATABASE_URL -f database.sql
+
+   # Or copy contents of database.sql and run in your PostgreSQL client
+   ```
 
 ### AWS SES Setup
 

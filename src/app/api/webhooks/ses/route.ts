@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withCors, handleError } from "@/lib/middleware";
-import { supabaseAdmin } from "@/lib/supabase";
+import { query } from "@/lib/database";
 
 interface SESEvent {
   Type: string;
@@ -81,18 +81,25 @@ async function handleSESWebhook(req: NextRequest) {
 async function processSESEvent(message: SESMessage) {
   try {
     // Find the email log by SES message ID
-    const { data: emailLog, error } = await supabaseAdmin
-      .from("email_logs")
-      .select("*")
-      .eq("ses_message_id", message.mail.messageId)
-      .single();
+    const emailResult = await query(
+      "SELECT * FROM email_logs WHERE ses_message_id = $1 LIMIT 1",
+      [message.mail.messageId]
+    );
 
-    if (error || !emailLog) {
+    if (emailResult.rows.length === 0) {
       console.warn(
         `Email log not found for message ID: ${message.mail.messageId}`
       );
       return;
     }
+
+    const emailLog = {
+      ...emailResult.rows[0],
+      to_emails: JSON.parse(emailResult.rows[0].to_emails || "[]"),
+      cc_emails: JSON.parse(emailResult.rows[0].cc_emails || "[]"),
+      bcc_emails: JSON.parse(emailResult.rows[0].bcc_emails || "[]"),
+      attachments: JSON.parse(emailResult.rows[0].attachments || "[]"),
+    };
 
     // Update email status based on event type
     let newStatus = emailLog.status;
@@ -121,23 +128,19 @@ async function processSESEvent(message: SESMessage) {
     }
 
     // Update email log status
-    await supabaseAdmin
-      .from("email_logs")
-      .update({
-        status: newStatus,
-        error_message: errorMessage,
-        webhook_data: message,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", emailLog.id);
+    await query(
+      `UPDATE email_logs 
+       SET status = $1, error_message = $2, webhook_data = $3
+       WHERE id = $4`,
+      [newStatus, errorMessage, JSON.stringify(message), emailLog.id]
+    );
 
     // Create webhook event record
-    await supabaseAdmin.from("webhook_events").insert({
-      email_log_id: emailLog.id,
-      event_type: message.eventType,
-      event_data: message,
-      processed: true,
-    });
+    await query(
+      `INSERT INTO webhook_events (email_log_id, event_type, event_data, processed)
+       VALUES ($1, $2, $3, $4)`,
+      [emailLog.id, message.eventType, JSON.stringify(message), true]
+    );
 
     console.log(
       `Processed ${message.eventType} event for email ${emailLog.id}`
@@ -147,12 +150,11 @@ async function processSESEvent(message: SESMessage) {
 
     // Create unprocessed webhook event for manual review
     try {
-      await supabaseAdmin.from("webhook_events").insert({
-        email_log_id: null,
-        event_type: message.eventType,
-        event_data: message,
-        processed: false,
-      });
+      await query(
+        `INSERT INTO webhook_events (email_log_id, event_type, event_data, processed)
+         VALUES ($1, $2, $3, $4)`,
+        [null, message.eventType, JSON.stringify(message), false]
+      );
     } catch (insertError) {
       console.error("Failed to create webhook event record:", insertError);
     }

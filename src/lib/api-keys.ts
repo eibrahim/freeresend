@@ -1,7 +1,7 @@
 import { nanoid } from "nanoid";
 import bcrypt from "bcryptjs";
-import { supabaseAdmin } from "./supabase";
-import type { ApiKey } from "./supabase";
+import { query } from "./database";
+import type { ApiKey } from "./database";
 
 export interface ApiKeyWithKey extends Omit<ApiKey, "key_hash"> {
   key: string;
@@ -21,27 +21,34 @@ export async function generateApiKey(
   // Hash the key for storage
   const keyHash = await bcrypt.hash(apiKey, 10);
 
-  const { data, error } = await supabaseAdmin
-    .from("api_keys")
-    .insert({
-      user_id: userId,
-      domain_id: domainId,
-      key_name: keyName,
-      key_hash: keyHash,
-      key_prefix: `frs_${keyId}`,
-      permissions,
-    })
-    .select()
-    .single();
+  try {
+    const result = await query(
+      `INSERT INTO api_keys (user_id, domain_id, key_name, key_hash, key_prefix, permissions) 
+       VALUES ($1, $2, $3, $4, $5, $6) 
+       RETURNING *`,
+      [
+        userId,
+        domainId,
+        keyName,
+        keyHash,
+        `frs_${keyId}`,
+        JSON.stringify(permissions),
+      ]
+    );
 
-  if (error) {
+    if (result.rows.length === 0) {
+      throw new Error("Failed to create API key");
+    }
+
+    const data = result.rows[0];
+    return {
+      ...data,
+      permissions: JSON.parse(data.permissions), // Convert back from JSON string
+      key: apiKey,
+    };
+  } catch (error: any) {
     throw new Error(`Failed to create API key: ${error.message}`);
   }
-
-  return {
-    ...data,
-    key: apiKey,
-  };
 }
 
 export async function verifyApiKey(apiKey: string): Promise<ApiKey | null> {
@@ -64,78 +71,94 @@ export async function verifyApiKey(apiKey: string): Promise<ApiKey | null> {
 
   const prefix = `${prefix_part}_${keyId_part}`;
 
-  const { data: keys, error } = await supabaseAdmin
-    .from("api_keys")
-    .select("*")
-    .eq("key_prefix", prefix);
+  try {
+    const result = await query("SELECT * FROM api_keys WHERE key_prefix = $1", [
+      prefix,
+    ]);
 
-  if (error || !keys || keys.length === 0) {
+    if (result.rows.length === 0) {
+      return null;
+    }
+
+    // Verify the full key against each possible match
+    for (const key of result.rows) {
+      const isValid = await bcrypt.compare(apiKey, key.key_hash);
+      if (isValid) {
+        // Update last used timestamp
+        await query("UPDATE api_keys SET last_used_at = NOW() WHERE id = $1", [
+          key.id,
+        ]);
+
+        // Parse JSON fields
+        return {
+          ...key,
+          permissions: JSON.parse(key.permissions),
+        };
+      }
+    }
+
+    return null;
+  } catch (error) {
+    console.error("API key verification error:", error);
     return null;
   }
-
-  // Verify the full key against each possible match
-  for (const key of keys) {
-    const isValid = await bcrypt.compare(apiKey, key.key_hash);
-    if (isValid) {
-      // Update last used timestamp
-      await supabaseAdmin
-        .from("api_keys")
-        .update({ last_used_at: new Date().toISOString() })
-        .eq("id", key.id);
-
-      return key;
-    }
-  }
-
-  return null;
 }
 
 export async function getUserApiKeys(userId: string): Promise<ApiKey[]> {
-  const { data, error } = await supabaseAdmin
-    .from("api_keys")
-    .select(
-      `
-      *,
-      domains (
-        domain
-      )
-    `
-    )
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false });
+  try {
+    const result = await query(
+      `SELECT 
+        ak.*,
+        d.domain as domain_name
+      FROM api_keys ak
+      LEFT JOIN domains d ON ak.domain_id = d.id
+      WHERE ak.user_id = $1
+      ORDER BY ak.created_at DESC`,
+      [userId]
+    );
 
-  if (error) {
+    return result.rows.map((row) => ({
+      ...row,
+      permissions: JSON.parse(row.permissions),
+      domains: row.domain_name ? { domain: row.domain_name } : null,
+    }));
+  } catch (error: any) {
     throw new Error(`Failed to fetch API keys: ${error.message}`);
   }
-
-  return data || [];
 }
 
 export async function getDomainApiKeys(domainId: string): Promise<ApiKey[]> {
-  const { data, error } = await supabaseAdmin
-    .from("api_keys")
-    .select("*")
-    .eq("domain_id", domainId)
-    .order("created_at", { ascending: false });
+  try {
+    const result = await query(
+      `SELECT * FROM api_keys 
+       WHERE domain_id = $1 
+       ORDER BY created_at DESC`,
+      [domainId]
+    );
 
-  if (error) {
+    return result.rows.map((row) => ({
+      ...row,
+      permissions: JSON.parse(row.permissions),
+    }));
+  } catch (error: any) {
     throw new Error(`Failed to fetch domain API keys: ${error.message}`);
   }
-
-  return data || [];
 }
 
 export async function deleteApiKey(
   keyId: string,
   userId: string
 ): Promise<void> {
-  const { error } = await supabaseAdmin
-    .from("api_keys")
-    .delete()
-    .eq("id", keyId)
-    .eq("user_id", userId);
+  try {
+    const result = await query(
+      "DELETE FROM api_keys WHERE id = $1 AND user_id = $2",
+      [keyId, userId]
+    );
 
-  if (error) {
+    if (result.rowCount === 0) {
+      throw new Error("API key not found or access denied");
+    }
+  } catch (error: any) {
     throw new Error(`Failed to delete API key: ${error.message}`);
   }
 }
@@ -145,13 +168,16 @@ export async function updateApiKeyPermissions(
   userId: string,
   permissions: string[]
 ): Promise<void> {
-  const { error } = await supabaseAdmin
-    .from("api_keys")
-    .update({ permissions })
-    .eq("id", keyId)
-    .eq("user_id", userId);
+  try {
+    const result = await query(
+      "UPDATE api_keys SET permissions = $1 WHERE id = $2 AND user_id = $3",
+      [JSON.stringify(permissions), keyId, userId]
+    );
 
-  if (error) {
+    if (result.rowCount === 0) {
+      throw new Error("API key not found or access denied");
+    }
+  } catch (error: any) {
     throw new Error(`Failed to update API key permissions: ${error.message}`);
   }
 }
