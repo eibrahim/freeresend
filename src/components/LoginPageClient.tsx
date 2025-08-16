@@ -1,11 +1,20 @@
 "use client";
 
 import { useAuth } from "@/contexts/AuthContext";
-import LandingPage from "@/components/LandingPage";
-import Dashboard from "@/components/Dashboard";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import LoginForm from "@/components/LoginForm";
 
-export default function Home() {
+export default function LoginPageClient() {
   const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    // Redirect to dashboard if user is already logged in
+    if (user) {
+      router.push("/");
+    }
+  }, [user, router]);
 
   if (loading) {
     return (
@@ -18,11 +27,10 @@ export default function Home() {
     );
   }
 
-  // Show dashboard if user is authenticated
+  // Don't show login form if user is authenticated (they'll be redirected)
   if (user) {
-    return <Dashboard />;
+    return null;
   }
 
-  // Show landing page for unauthenticated users
-  return <LandingPage />;
+  return <LoginForm />;
 }

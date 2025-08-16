@@ -36,6 +36,7 @@
     "bcryptjs": "^2.4.3",
     "jose": "^5.9.6",
     "jsonwebtoken": "^9.0.2",
+    "lucide-react": "^0.539.0",
     "nanoid": "^5.0.9",
     "next": "15.4.6",
     "next-auth": "^4.24.10",

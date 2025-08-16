@@ -1,15 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import {
-  withApiKey,
-  withCors,
-  validateRequest,
-  handleError,
-} from "@/lib/middleware";
+import { verifyApiKey } from "@/lib/api-keys";
 import { sendEmail } from "@/lib/ses";
 import { getDomainById } from "@/lib/domains";
 import { query } from "@/lib/database";
-import type { AuthenticatedRequest } from "@/lib/middleware";
 
 const attachmentSchema = z.object({
   filename: z.string(),
@@ -36,24 +30,42 @@ const sendEmailSchema = z
     message: "Either html or text content is required",
   });
 
-type EmailBody = {
-  from: string;
-  to: string[] | string;
-  cc?: string[] | string;
-  bcc?: string[] | string;
-  subject?: string;
-  html?: string;
-  text?: string;
-  attachments?: Array<{ filename: string; content: string; contentType?: string }>;
-  reply_to?: string[] | string;
-  tags?: Record<string, string>;
-};
+function cors(response: NextResponse) {
+  response.headers.set("Access-Control-Allow-Origin", "*");
+  response.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  return response;
+}
 
-async function sendEmailHandler(
-  req: AuthenticatedRequest,
-  body: EmailBody
-) {
+export async function POST(request: NextRequest) {
+  // Handle CORS preflight
+  if (request.method === "OPTIONS") {
+    return cors(new NextResponse(null, { status: 200 }));
+  }
+
   try {
+    // Check authorization (API key required)
+    const authHeader = request.headers.get("authorization");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return cors(NextResponse.json(
+        { error: "Missing authorization header" },
+        { status: 401 }
+      ));
+    }
+
+    const apiKeyValue = authHeader.substring(7);
+    const apiKey = await verifyApiKey(apiKeyValue);
+    if (!apiKey) {
+      return cors(NextResponse.json(
+        { error: "Invalid API key" },
+        { status: 401 }
+      ));
+    }
+
+    // Parse and validate request body
+    const body = await request.json();
+    const validatedData = sendEmailSchema.parse(body);
+    
     const {
       from,
       to,
@@ -65,37 +77,36 @@ async function sendEmailHandler(
       attachments,
       reply_to,
       tags,
-    } = body;
-    const apiKey = req.apiKey!;
+    } = validatedData;
 
     // Verify the from domain is authorized for this API key
     const domain = await getDomainById(apiKey.domain_id);
     if (!domain) {
-      return NextResponse.json({ error: "Domain not found" }, { status: 404 });
+      return cors(NextResponse.json({ error: "Domain not found" }, { status: 404 }));
     }
 
     if (domain.status !== "verified") {
-      return NextResponse.json(
+      return cors(NextResponse.json(
         { error: "Domain not verified" },
         { status: 400 }
-      );
+      ));
     }
 
     // Validate from email domain
     const fromDomain = from.split("@")[1];
     if (fromDomain !== domain.domain) {
-      return NextResponse.json(
+      return cors(NextResponse.json(
         { error: `From email must be from domain: ${domain.domain}` },
         { status: 400 }
-      );
+      ));
     }
 
     // Check API key permissions
     if (!apiKey.permissions.includes("send")) {
-      return NextResponse.json(
+      return cors(NextResponse.json(
         { error: "API key does not have send permission" },
         { status: 403 }
-      );
+      ));
     }
 
     // Convert arrays and prepare data for SES
@@ -154,43 +165,29 @@ async function sendEmailHandler(
       console.error("Failed to log email:", logError);
     }
 
-    return NextResponse.json({
+    return cors(NextResponse.json({
       id: emailLog?.id || messageId,
       from,
       to,
       created_at: new Date().toISOString(),
-    });
+    }));
   } catch (error: unknown) {
-    // Log failed email attempt
-    try {
-      await query(
-        `INSERT INTO email_logs (
-          api_key_id, domain_id, from_email, to_emails, cc_emails, bcc_emails,
-          subject, html_content, text_content, attachments, status, error_message
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
-        [
-          req.apiKey?.id,
-          req.apiKey?.domain_id,
-          body?.from || "",
-          JSON.stringify(body?.to || []),
-          JSON.stringify(body?.cc || []),
-          JSON.stringify(body?.bcc || []),
-          body?.subject || "",
-          body?.html,
-          body?.text,
-          JSON.stringify(body?.attachments || []),
-          "failed",
-          (error as { message?: string }).message || "Unknown error",
-        ]
-      );
-    } catch (logError) {
-      console.error("Failed to log failed email:", logError);
+    // Handle validation errors
+    const errorObj = error as { errors?: unknown; message?: string };
+    if (errorObj.errors || errorObj.message?.includes('validation') || errorObj.message?.includes('parse')) {
+      return cors(NextResponse.json(
+        {
+          error: "Invalid request data",
+          details: errorObj.errors || errorObj.message,
+        },
+        { status: 400 }
+      ));
     }
 
-    return handleError(error);
+    console.error("API Error:", error);
+    return cors(NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    ));
   }
 }
-
-export const POST = withCors(
-  withApiKey(validateRequest(sendEmailSchema)(sendEmailHandler))
-);

@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { withCors, handleError } from "@/lib/middleware";
 import { query } from "@/lib/database";
 
 interface SESMessage {
@@ -61,7 +60,10 @@ async function handleSESWebhook(req: NextRequest) {
     return NextResponse.json({ message: "Unknown event type" });
   } catch (error) {
     console.error("SES webhook error:", error);
-    return handleError(error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
 
@@ -148,4 +150,27 @@ async function processSESEvent(message: SESMessage) {
   }
 }
 
-export const POST = withCors(handleSESWebhook);
+function cors(response: NextResponse) {
+  response.headers.set("Access-Control-Allow-Origin", "*");
+  response.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  return response;
+}
+
+export async function POST(request: NextRequest) {
+  // Handle CORS preflight
+  if (request.method === "OPTIONS") {
+    return cors(new NextResponse(null, { status: 200 }));
+  }
+
+  try {
+    const result = await handleSESWebhook(request);
+    return cors(result);
+  } catch (error) {
+    console.error("API Error:", error);
+    return cors(NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    ));
+  }
+}

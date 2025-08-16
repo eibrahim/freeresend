@@ -43,7 +43,7 @@ export function withAuth<T = Record<string, string>>(
 export function withApiKey<T = Record<string, string>>(
   handler: (req: AuthenticatedRequest, context?: { params: Promise<T> }) => Promise<NextResponse>
 ) {
-  return async (req: NextRequest, context?: { params: Promise<T> }) => {
+  return async (req: NextRequest, context?: { params: Promise<T> } | undefined) => {
     const authHeader = req.headers.get("authorization");
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -92,7 +92,7 @@ export function cors(response: NextResponse): NextResponse {
 export function withCors<T = Record<string, string>>(
   handler: (req: NextRequest, context?: { params: Promise<T> }) => Promise<NextResponse>
 ) {
-  return async (req: NextRequest, context?: { params: Promise<T> }) => {
+  return async (req: NextRequest, context?: { params: Promise<T> } | undefined) => {
     // Handle preflight requests
     if (req.method === "OPTIONS") {
       return cors(new NextResponse(null, { status: 200 }));
@@ -111,7 +111,7 @@ export function validateRequest<T, P = Record<string, string>>(schema: z.ZodSche
       context?: { params: Promise<P> }
     ) => Promise<NextResponse>
   ) {
-    return async (req: NextRequest, context?: { params: Promise<P> }) => {
+    return async (req: NextRequest, context?: { params: Promise<P> } | undefined) => {
       try {
         const body = await req.json();
         const validatedData = schema.parse(body);
