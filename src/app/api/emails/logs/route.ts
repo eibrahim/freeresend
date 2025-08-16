@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { withAuth, withApiKey, withCors, handleError } from "@/lib/middleware";
+import { verifyJWT } from "@/lib/auth";
+import { verifyApiKey } from "@/lib/api-keys";
 import { query } from "@/lib/database";
-import type { AuthenticatedRequest } from "@/lib/middleware";
 
 // Helper function to safely parse email arrays (handles both string and array)
 function safeParseEmailArray(emailData: unknown): string[] {
@@ -19,28 +19,64 @@ function safeParseEmailArray(emailData: unknown): string[] {
   return [];
 }
 
-async function getEmailLogsHandler(req: AuthenticatedRequest) {
+
+function cors(response: NextResponse) {
+  response.headers.set("Access-Control-Allow-Origin", "*");
+  response.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  return response;
+}
+
+// Support both user authentication (dashboard) and API key authentication
+export async function GET(request: NextRequest) {
+  // Handle CORS preflight
+  if (request.method === "OPTIONS") {
+    return cors(new NextResponse(null, { status: 200 }));
+  }
+
   try {
-    const { searchParams } = new URL(req.url);
+    const authHeader = request.headers.get("authorization");
+    
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return cors(NextResponse.json(
+        { error: "Missing authorization header" },
+        { status: 401 }
+      ));
+    }
+
+    const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1");
     const limit = Math.min(parseInt(searchParams.get("limit") || "50"), 100);
     const domainId = searchParams.get("domain_id");
     const status = searchParams.get("status");
 
     const offset = (page - 1) * limit;
-
-    // Get domain IDs based on authentication type
     let domainIds: string[] = [];
 
-    if (req.apiKey) {
-      // API key authentication - use the specific domain
-      domainIds = [req.apiKey.domain_id];
-    } else if (req.user) {
-      // User authentication - get all user's domains
+    if (authHeader.startsWith("Bearer frs_")) {
+      // API key authentication
+      const apiKey = await verifyApiKey(authHeader.substring(7));
+      if (!apiKey) {
+        return cors(NextResponse.json(
+          { error: "Invalid API key" },
+          { status: 401 }
+        ));
+      }
+      domainIds = [apiKey.domain_id];
+    } else {
+      // User JWT authentication
+      const user = verifyJWT(authHeader.substring(7));
+      if (!user) {
+        return cors(NextResponse.json(
+          { error: "Invalid or expired token" },
+          { status: 401 }
+        ));
+      }
+      
       try {
         const result = await query(
           "SELECT id FROM domains WHERE user_id = $1",
-          [req.user.id]
+          [user.id]
         );
         domainIds = result.rows.map((d) => d.id);
       } catch (domainsError: unknown) {
@@ -49,13 +85,11 @@ async function getEmailLogsHandler(req: AuthenticatedRequest) {
           `Failed to fetch user domains: ${errorObj.message}`
         );
       }
-    } else {
-      throw new Error("Authentication required");
     }
 
     // If user has no domains, return empty result
     if (domainIds.length === 0) {
-      return NextResponse.json({
+      return cors(NextResponse.json({
         success: true,
         data: {
           emails: [],
@@ -66,7 +100,7 @@ async function getEmailLogsHandler(req: AuthenticatedRequest) {
             totalPages: 0,
           },
         },
-      });
+      }));
     }
 
     // Build WHERE conditions
@@ -118,7 +152,7 @@ async function getEmailLogsHandler(req: AuthenticatedRequest) {
       api_keys: row.api_key_name ? { key_name: row.api_key_name } : null,
     }));
 
-    return NextResponse.json({
+    return cors(NextResponse.json({
       success: true,
       data: {
         emails: emailLogs,
@@ -129,21 +163,12 @@ async function getEmailLogsHandler(req: AuthenticatedRequest) {
           totalPages: Math.ceil(totalCount / limit),
         },
       },
-    });
+    }));
   } catch (error) {
-    return handleError(error);
+    console.error("API Error:", error);
+    return cors(NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    ));
   }
 }
-
-// Support both user authentication (dashboard) and API key authentication
-export const GET = withCors(async (req: NextRequest, context?: { params: Promise<Record<string, string>> }) => {
-  const authHeader = req.headers.get("authorization");
-
-  if (authHeader?.startsWith("Bearer frs_")) {
-    // API key authentication
-    return withApiKey(getEmailLogsHandler)(req, context);
-  } else {
-    // User JWT authentication
-    return withAuth(getEmailLogsHandler)(req, context);
-  }
-});

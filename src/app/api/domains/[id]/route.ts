@@ -1,47 +1,102 @@
-import { NextResponse } from "next/server";
-import { withAuth, withCors, handleError } from "@/lib/middleware";
+import { NextRequest, NextResponse } from "next/server";
+import { verifyJWT } from "@/lib/auth";
 import { getDomainById, deleteDomain } from "@/lib/domains";
-import type { AuthenticatedRequest } from "@/lib/middleware";
 
-async function getDomainHandler(
-  req: AuthenticatedRequest,
-  context?: { params: Promise<Record<string, string>> }
+function cors(response: NextResponse) {
+  response.headers.set("Access-Control-Allow-Origin", "*");
+  response.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  return response;
+}
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  try {
-    if (!context) throw new Error('Context is required');
-    const params = await context.params as { id: string };
-    const domain = await getDomainById(params.id);
+  // Handle CORS preflight
+  if (request.method === "OPTIONS") {
+    return cors(new NextResponse(null, { status: 200 }));
+  }
 
-    if (!domain || domain.user_id !== req.user!.id) {
-      return NextResponse.json({ error: "Domain not found" }, { status: 404 });
+  try {
+    // Check authorization
+    const authHeader = request.headers.get("authorization");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return cors(NextResponse.json(
+        { error: "Missing or invalid authorization header" },
+        { status: 401 }
+      ));
     }
 
-    return NextResponse.json({
+    const token = authHeader.substring(7);
+    const user = verifyJWT(token);
+    if (!user) {
+      return cors(NextResponse.json(
+        { error: "Invalid or expired token" },
+        { status: 401 }
+      ));
+    }
+
+    const { id } = await params;
+    const domain = await getDomainById(id);
+
+    if (!domain || domain.user_id !== user.id) {
+      return cors(NextResponse.json({ error: "Domain not found" }, { status: 404 }));
+    }
+
+    return cors(NextResponse.json({
       success: true,
       data: { domain },
-    });
+    }));
   } catch (error) {
-    return handleError(error);
+    console.error("API Error:", error);
+    return cors(NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    ));
   }
 }
 
-async function deleteDomainHandler(
-  req: AuthenticatedRequest,
-  context?: { params: Promise<Record<string, string>> }
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  try {
-    if (!context) throw new Error('Context is required');
-    const params = await context.params as { id: string };
-    await deleteDomain(params.id, req.user!.id);
+  // Handle CORS preflight
+  if (request.method === "OPTIONS") {
+    return cors(new NextResponse(null, { status: 200 }));
+  }
 
-    return NextResponse.json({
+  try {
+    // Check authorization
+    const authHeader = request.headers.get("authorization");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return cors(NextResponse.json(
+        { error: "Missing or invalid authorization header" },
+        { status: 401 }
+      ));
+    }
+
+    const token = authHeader.substring(7);
+    const user = verifyJWT(token);
+    if (!user) {
+      return cors(NextResponse.json(
+        { error: "Invalid or expired token" },
+        { status: 401 }
+      ));
+    }
+
+    const { id } = await params;
+    await deleteDomain(id, user.id);
+
+    return cors(NextResponse.json({
       success: true,
       message: "Domain deleted successfully",
-    });
+    }));
   } catch (error) {
-    return handleError(error);
+    console.error("API Error:", error);
+    return cors(NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    ));
   }
 }
-
-export const GET = withCors(withAuth(getDomainHandler));
-export const DELETE = withCors(withAuth(deleteDomainHandler));

@@ -1,7 +1,6 @@
-import { NextResponse } from "next/server";
-import { withAuth, withCors, handleError } from "@/lib/middleware";
+import { NextRequest, NextResponse } from "next/server";
+import { verifyJWT } from "@/lib/auth";
 import { query } from "@/lib/database";
-import type { AuthenticatedRequest } from "@/lib/middleware";
 
 // Helper function to safely parse email arrays (handles both string and array)
 function safeParseEmailArray(emailData: unknown): string[] {
@@ -35,13 +34,42 @@ function safeParseJSON(jsonData: unknown): Record<string, unknown> {
   return {};
 }
 
-async function getEmailHandler(
-  req: AuthenticatedRequest,
-  context?: { params: Promise<Record<string, string>> }
+function cors(response: NextResponse) {
+  response.headers.set("Access-Control-Allow-Origin", "*");
+  response.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  return response;
+}
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  // Handle CORS preflight
+  if (request.method === "OPTIONS") {
+    return cors(new NextResponse(null, { status: 200 }));
+  }
+
   try {
-    if (!context) throw new Error('Context is required');
-    const params = await context.params as { id: string };
+    // Check authorization
+    const authHeader = request.headers.get("authorization");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return cors(NextResponse.json(
+        { error: "Missing or invalid authorization header" },
+        { status: 401 }
+      ));
+    }
+
+    const token = authHeader.substring(7);
+    const user = verifyJWT(token);
+    if (!user) {
+      return cors(NextResponse.json(
+        { error: "Invalid or expired token" },
+        { status: 401 }
+      ));
+    }
+
+    const { id } = await params;
 
     // Get email with related data
     const emailResult = await query(
@@ -54,18 +82,18 @@ async function getEmailHandler(
       LEFT JOIN domains d ON el.domain_id = d.id
       LEFT JOIN api_keys ak ON el.api_key_id = ak.id
       WHERE el.id = $1`,
-      [params.id]
+      [id]
     );
 
     if (emailResult.rows.length === 0) {
-      return NextResponse.json({ error: "Email not found" }, { status: 404 });
+      return cors(NextResponse.json({ error: "Email not found" }, { status: 404 }));
     }
 
     const emailData = emailResult.rows[0];
 
     // Check if user owns this email log
-    if (emailData.domain_user_id !== req.user!.id) {
-      return NextResponse.json({ error: "Email not found" }, { status: 404 });
+    if (emailData.domain_user_id !== user.id) {
+      return cors(NextResponse.json({ error: "Email not found" }, { status: 404 }));
     }
 
     // Get webhook events for this email
@@ -74,7 +102,7 @@ async function getEmailHandler(
        FROM webhook_events 
        WHERE email_log_id = $1 
        ORDER BY created_at DESC`,
-      [params.id]
+      [id]
     );
 
     // Format the response to match original structure
@@ -97,13 +125,15 @@ async function getEmailHandler(
       })),
     };
 
-    return NextResponse.json({
+    return cors(NextResponse.json({
       success: true,
       data: { email },
-    });
+    }));
   } catch (error) {
-    return handleError(error);
+    console.error("API Error:", error);
+    return cors(NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    ));
   }
 }
-
-export const GET = withCors(withAuth(getEmailHandler));
