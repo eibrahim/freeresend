@@ -2,17 +2,17 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { 
-  ArrowRight, 
-  Code, 
-  DollarSign, 
-  Globe, 
-  Shield, 
-  Star, 
+import {
+  ArrowRight,
+  Code,
+  DollarSign,
+  Globe,
+  Shield,
+  Star,
   Zap,
   Github,
   Copy,
-  CheckCircle
+  CheckCircle,
 } from "lucide-react";
 import EnvelopeIcon from "./EnvelopeIcon";
 
@@ -20,7 +20,9 @@ export default function LandingPage() {
   const [copiedCode, setCopiedCode] = useState(false);
 
   const copyCodeSnippet = () => {
-    navigator.clipboard.writeText(`RESEND_BASE_URL="https://freeresend.com/api"`);
+    navigator.clipboard.writeText(
+      `RESEND_BASE_URL="https://freeresend.com/api"`
+    );
     setCopiedCode(true);
     setTimeout(() => setCopiedCode(false), 2000);
   };
@@ -69,15 +71,19 @@ export default function LandingPage() {
               🎉 Now Open Source • MIT License
             </div>
           </div>
-          
+
           <h2 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-            The <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Self-Hosted</span>
+            The{" "}
+            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              Self-Hosted
+            </span>
             <br />
             Alternative to Resend
           </h2>
-          
+
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
-            100% API compatible • 85% cost savings • Complete control over your email infrastructure
+            100% API compatible • 85% cost savings • Complete control over your
+            email infrastructure
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
@@ -103,12 +109,18 @@ export default function LandingPage() {
           <div className="max-w-2xl mx-auto">
             <div className="bg-gray-900 rounded-lg p-6 text-left">
               <div className="flex items-center justify-between mb-4">
-                <span className="text-gray-400 text-sm">Migration is literally one line:</span>
+                <span className="text-gray-400 text-sm">
+                  Migration is literally one line:
+                </span>
                 <button
                   onClick={copyCodeSnippet}
                   className="text-gray-400 hover:text-white transition-colors"
                 >
-                  {copiedCode ? <CheckCircle className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  {copiedCode ? (
+                    <CheckCircle className="h-4 w-4" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
                 </button>
               </div>
               <code className="text-green-400 font-mono text-sm block">
@@ -130,7 +142,8 @@ export default function LandingPage() {
               Why Choose FreeResend?
             </h3>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Get all the benefits of premium email services without the premium price tag
+              Get all the benefits of premium email services without the premium
+              price tag
             </p>
           </div>
 
@@ -139,9 +152,12 @@ export default function LandingPage() {
               <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
                 <DollarSign className="h-8 w-8 text-white" />
               </div>
-              <h4 className="text-xl font-semibold text-gray-900 mb-4">85% Cost Savings</h4>
+              <h4 className="text-xl font-semibold text-gray-900 mb-4">
+                85% Cost Savings
+              </h4>
               <p className="text-gray-600 leading-relaxed">
-                Pay Amazon SES rates ($0.10/1k emails) instead of premium pricing. Save hundreds annually across multiple projects.
+                Pay Amazon SES rates ($0.10/1k emails) instead of premium
+                pricing. Save hundreds annually across multiple projects.
               </p>
             </div>
 
@@ -149,9 +165,12 @@ export default function LandingPage() {
               <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
                 <Code className="h-8 w-8 text-white" />
               </div>
-              <h4 className="text-xl font-semibold text-gray-900 mb-4">Drop-in Compatible</h4>
+              <h4 className="text-xl font-semibold text-gray-900 mb-4">
+                Drop-in Compatible
+              </h4>
               <p className="text-gray-600 leading-relaxed">
-                100% API compatibility with Resend. Zero code changes required - just update your environment variable.
+                100% API compatibility with Resend. Zero code changes required -
+                just update your environment variable.
               </p>
             </div>
 
@@ -159,9 +178,12 @@ export default function LandingPage() {
               <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
                 <Zap className="h-8 w-8 text-white" />
               </div>
-              <h4 className="text-xl font-semibold text-gray-900 mb-4">Lightning Setup</h4>
+              <h4 className="text-xl font-semibold text-gray-900 mb-4">
+                Lightning Setup
+              </h4>
               <p className="text-gray-600 leading-relaxed">
-                Auto-creates DNS records with Digital Ocean. From domain to sending emails in under 60 seconds.
+                Auto-creates DNS records with Digital Ocean. From domain to
+                sending emails in under 60 seconds.
               </p>
             </div>
           </div>
@@ -185,39 +207,50 @@ export default function LandingPage() {
               {
                 icon: <Shield className="h-6 w-6" />,
                 title: "Enterprise Security",
-                description: "DKIM signing, SPF, DMARC, and full AWS security compliance"
+                description:
+                  "DKIM signing, SPF, DMARC, and full AWS security compliance",
               },
               {
                 icon: <Globe className="h-6 w-6" />,
                 title: "Multi-Domain Support",
-                description: "Manage unlimited domains with automatic verification and setup"
+                description:
+                  "Manage unlimited domains with automatic verification and setup",
               },
               {
                 icon: <Star className="h-6 w-6" />,
                 title: "Email Analytics",
-                description: "Comprehensive logging, delivery tracking, and performance metrics"
+                description:
+                  "Comprehensive logging, delivery tracking, and performance metrics",
               },
               {
                 icon: <Code className="h-6 w-6" />,
                 title: "API-First Design",
-                description: "RESTful APIs with comprehensive documentation and SDK compatibility"
+                description:
+                  "RESTful APIs with comprehensive documentation and SDK compatibility",
               },
               {
                 icon: <Zap className="h-6 w-6" />,
                 title: "Webhook Support",
-                description: "Real-time event notifications for bounces, complaints, and delivery"
+                description:
+                  "Real-time event notifications for bounces, complaints, and delivery",
               },
               {
                 icon: <Github className="h-6 w-6" />,
                 title: "Open Source",
-                description: "MIT licensed, community-driven, and fully customizable"
-              }
+                description:
+                  "MIT licensed, community-driven, and fully customizable",
+              },
             ].map((feature, index) => (
-              <div key={index} className="bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+              <div
+                key={index}
+                className="bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow"
+              >
                 <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
                   <div className="text-blue-600">{feature.icon}</div>
                 </div>
-                <h4 className="text-lg font-semibold text-gray-900 mb-2">{feature.title}</h4>
+                <h4 className="text-lg font-semibold text-gray-900 mb-2">
+                  {feature.title}
+                </h4>
                 <p className="text-gray-600">{feature.description}</p>
               </div>
             ))}
@@ -242,9 +275,15 @@ export default function LandingPage() {
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Feature</th>
-                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">FreeResend</th>
-                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">Premium Services</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                      Feature
+                    </th>
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">
+                      FreeResend
+                    </th>
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">
+                      Premium Services
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -252,38 +291,44 @@ export default function LandingPage() {
                     {
                       feature: "Cost per 1,000 emails",
                       freeresend: "$0.10 (SES rates)",
-                      premium: "$1.00 - $2.00+"
+                      premium: "$1.00 - $2.00+",
                     },
                     {
                       feature: "API Compatibility",
                       freeresend: "100% Resend compatible",
-                      premium: "Proprietary APIs"
+                      premium: "Proprietary APIs",
                     },
                     {
                       feature: "Domain Setup Time",
                       freeresend: "< 60 seconds (auto)",
-                      premium: "15+ minutes (manual)"
+                      premium: "15+ minutes (manual)",
                     },
                     {
                       feature: "Self-Hosted",
                       freeresend: "✓ Full control",
-                      premium: "✗ Vendor lock-in"
+                      premium: "✗ Vendor lock-in",
                     },
                     {
                       feature: "Open Source",
                       freeresend: "✓ MIT License",
-                      premium: "✗ Proprietary"
+                      premium: "✗ Proprietary",
                     },
                     {
                       feature: "Custom Modifications",
                       freeresend: "✓ Unlimited",
-                      premium: "✗ Limited"
-                    }
+                      premium: "✗ Limited",
+                    },
                   ].map((row, index) => (
                     <tr key={index}>
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900">{row.feature}</td>
-                      <td className="px-6 py-4 text-sm text-center text-green-600 font-semibold">{row.freeresend}</td>
-                      <td className="px-6 py-4 text-sm text-center text-gray-500">{row.premium}</td>
+                      <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                        {row.feature}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-center text-green-600 font-semibold">
+                        {row.freeresend}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-center text-gray-500">
+                        {row.premium}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -302,7 +347,7 @@ export default function LandingPage() {
           <p className="text-xl text-blue-100 mb-8">
             Join developers already saving money with FreeResend
           </p>
-          
+
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href="/login"
@@ -339,37 +384,100 @@ export default function LandingPage() {
                 Open-source, self-hosted email service compatible with Resend.
               </p>
             </div>
-            
+
             <div>
               <h5 className="font-semibold mb-4">Resources</h5>
               <ul className="space-y-2">
-                <li><a href="https://github.com/eibrahim/freeresend" className="text-gray-400 hover:text-white transition-colors">Documentation</a></li>
-                <li><a href="https://github.com/eibrahim/freeresend" className="text-gray-400 hover:text-white transition-colors">GitHub</a></li>
-                <li><a href="https://github.com/eibrahim/freeresend/issues" className="text-gray-400 hover:text-white transition-colors">Issues</a></li>
+                <li>
+                  <a
+                    href="https://github.com/eibrahim/freeresend"
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    Documentation
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="https://github.com/eibrahim/freeresend"
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    GitHub
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="https://github.com/eibrahim/freeresend/issues"
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    Issues
+                  </a>
+                </li>
               </ul>
             </div>
-            
+
             <div>
               <h5 className="font-semibold mb-4">Community</h5>
               <ul className="space-y-2">
-                <li><a href="https://github.com/eibrahim/freeresend/discussions" className="text-gray-400 hover:text-white transition-colors">Discussions</a></li>
-                <li><a href="https://github.com/eibrahim/freeresend/blob/main/CONTRIBUTING.md" className="text-gray-400 hover:text-white transition-colors">Contributing</a></li>
-                <li><a href="https://x.com/eibrahim" className="text-gray-400 hover:text-white transition-colors">Twitter</a></li>
+                <li>
+                  <a
+                    href="https://github.com/eibrahim/freeresend/discussions"
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    Discussions
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="https://github.com/eibrahim/freeresend/blob/main/CONTRIBUTING.md"
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    Contributing
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="https://x.com/eibrahim"
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    Twitter
+                  </a>
+                </li>
               </ul>
             </div>
-            
+
             <div>
               <h5 className="font-semibold mb-4">Legal</h5>
               <ul className="space-y-2">
-                <li><a href="https://github.com/eibrahim/freeresend/blob/main/LICENSE" className="text-gray-400 hover:text-white transition-colors">MIT License</a></li>
-                <li><a href="https://x.com/eibrahim" className="text-gray-400 hover:text-white transition-colors">Contact</a></li>
+                <li>
+                  <a
+                    href="https://github.com/eibrahim/freeresend/blob/main/LICENSE"
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    MIT License
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="https://x.com/eibrahim"
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    Contact
+                  </a>
+                </li>
               </ul>
             </div>
           </div>
-          
+
           <div className="border-t border-gray-800 mt-8 pt-8 text-center">
             <p className="text-gray-400">
-              Built by <a href="https://x.com/eibrahim" className="text-blue-400 hover:text-blue-300">@eibrahim</a> • MIT Licensed • Made with ❤️ for developers
+              Built by{" "}
+              <a
+                href="https://x.com/eibrahim"
+                className="text-blue-400 hover:text-blue-300"
+              >
+                @eibrahim
+              </a>{" "}
+              • MIT Licensed • Made with ❤️ for developers.
             </p>
           </div>
         </div>
