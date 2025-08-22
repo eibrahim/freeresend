@@ -1,0 +1,99 @@
+name: Deploy to Kubernetes
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  REGISTRY: registry.digitalocean.com/curatedletters
+  IMAGE_NAME: freeresend
+
+jobs:
+  deploy:
+    name: Deploy to Digital Ocean Kubernetes
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Install doctl
+      uses: digitalocean/action-doctl@v2
+      with:
+        token: ${{ secrets.DO_API_TOKEN }}
+
+    - name: Log in to Digital Ocean Container Registry
+      run: doctl registry login --expiry-seconds 1200
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        platforms: linux/amd64
+        push: true
+        tags: |
+          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Set up kubectl
+      run: |
+        doctl kubernetes cluster kubeconfig save --expiry-seconds 600 ${{ secrets.K8S_CLUSTER_NAME }}
+
+    - name: Create registry secret
+      run: |
+        kubectl create secret docker-registry curatedletters \
+          --docker-server=registry.digitalocean.com \
+          --docker-username=${{ secrets.DO_API_TOKEN }} \
+          --docker-password=${{ secrets.DO_API_TOKEN }} \
+          --docker-email=${{ secrets.ADMIN_EMAIL }} \
+          -n freeresend \
+          --dry-run=client -o yaml | kubectl apply -f -
+
+    - name: Deploy to Kubernetes
+      run: |
+        # Apply namespace first
+        kubectl apply -f k8s/namespace.yaml
+        
+        # Create secrets from GitHub secrets
+        kubectl create secret generic freeresend-secrets \
+          --from-literal=NEXTAUTH_URL="https://www.freeresend.com" \
+          --from-literal=NEXTAUTH_SECRET="${{ secrets.NEXTAUTH_SECRET }}" \
+          --from-literal=DATABASE_URL="${{ secrets.DATABASE_URL }}" \
+          --from-literal=AWS_REGION="us-east-1" \
+          --from-literal=AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" \
+          --from-literal=AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" \
+          --from-literal=DO_API_TOKEN="${{ secrets.DO_API_TOKEN }}" \
+          --from-literal=ADMIN_EMAIL="${{ secrets.ADMIN_EMAIL }}" \
+          --from-literal=ADMIN_PASSWORD="${{ secrets.ADMIN_PASSWORD }}" \
+          -n freeresend \
+          --dry-run=client -o yaml | kubectl apply -f -
+        
+        # Apply application manifests
+        kubectl apply -f k8s/deployment.yaml
+        kubectl apply -f k8s/service.yaml
+        kubectl apply -f k8s/ingress.yaml
+        kubectl apply -f k8s/hpa.yaml
+        
+        # Update image to latest version
+        kubectl set image deployment/freeresend \
+          freeresend=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} \
+          -n freeresend
+
+    - name: Wait for deployment
+      run: |
+        kubectl rollout status deployment/freeresend -n freeresend --timeout=600s
+
+    - name: Get deployment status
+      run: |
+        kubectl get pods -n freeresend
+        kubectl get services -n freeresend  
+        kubectl get ingress -n freeresend
+        echo ""
+        echo "🎉 Deployment completed!"
+        echo "🌐 Application available at: https://www.freeresend.com"
