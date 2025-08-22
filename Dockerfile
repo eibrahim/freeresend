@@ -1,23 +1,27 @@
-# Use the official Node.js 18 image
-FROM node:18-alpine
-
-# Set working directory
+# Base stage
+FROM node:20-alpine AS base
 WORKDIR /app
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
 
-# Copy package files
-COPY package*.json ./
-
-# Install dependencies
-RUN npm ci --only=production
-
-# Copy source code
+# Production builder stage
+FROM base AS builder
+WORKDIR /app
 COPY . .
-
-# Build the application
+COPY package*.json ./
+RUN npm ci --include=dev
 RUN npm run build
 
-# Expose the port the app runs on
+# Production stage
+FROM base AS production
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+
 EXPOSE 3000
 
-# Start the application
-CMD ["npm", "start"]
+CMD ["node", "server.js"]

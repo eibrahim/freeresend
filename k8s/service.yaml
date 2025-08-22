@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: freeresend
+  namespace: freeresend
+  labels:
+    app: freeresend
+spec:
+  selector:
+    app: freeresend
+  ports:
+    - name: http
+      port: 80
+      targetPort: 3000
+      protocol: TCP
+  type: ClusterIP
