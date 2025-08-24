@@ -1,4 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+
+// Next.js 15 route context type
+type RouteContext<T = Record<string, string>> = {
+  params: Promise<T>;
+};
 import { verifyJWT } from "./auth";
 import { verifyApiKey } from "./api-keys";
 import type { AuthUser } from "./auth";
@@ -11,9 +16,9 @@ export interface AuthenticatedRequest extends NextRequest {
 }
 
 export function withAuth<T = Record<string, string>>(
-  handler: (req: AuthenticatedRequest, context?: { params: Promise<T> }) => Promise<NextResponse>
+  handler: (req: AuthenticatedRequest, context?: RouteContext<T>) => Promise<NextResponse>
 ) {
-  return async (req: NextRequest, context?: { params: Promise<T> }) => {
+  return async (req: NextRequest, context?: RouteContext<T>) => {
     const authHeader = req.headers.get("authorization");
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -41,9 +46,9 @@ export function withAuth<T = Record<string, string>>(
 }
 
 export function withApiKey<T = Record<string, string>>(
-  handler: (req: AuthenticatedRequest, context?: { params: Promise<T> }) => Promise<NextResponse>
+  handler: (req: AuthenticatedRequest, context?: RouteContext<T>) => Promise<NextResponse>
 ) {
-  return async (req: NextRequest, context?: { params: Promise<T> } | undefined) => {
+  return async (req: NextRequest, context?: RouteContext<T>) => {
     const authHeader = req.headers.get("authorization");
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {

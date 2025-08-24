@@ -7,7 +7,7 @@ import {
   getWaitlistAnalytics,
   type CreateWaitlistSignupData,
 } from "@/lib/database";
-import { withCors, validateRequest, handleError, withAuth } from "@/lib/middleware";
+import { handleError } from "@/lib/middleware";
 import { sendWaitlistNotification, sendWelcomeEmail } from "@/lib/notifications";
 
 // Validation schema for waitlist signup
@@ -21,16 +21,29 @@ const WaitlistSignupSchema = z.object({
   utmCampaign: z.string().max(100).optional(),
 });
 
-type WaitlistSignupRequest = z.infer<typeof WaitlistSignupSchema>;
+
 
 // POST /api/waitlist - Add email to waitlist
-async function handlePost(
-  req: NextRequest,
-  body: WaitlistSignupRequest
-): Promise<NextResponse> {
+async function handlePost(req: NextRequest): Promise<NextResponse> {
   try {
+    // Parse and validate request body
+    const body = await req.json();
+    const validationResult = WaitlistSignupSchema.safeParse(body);
+    
+    if (!validationResult.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Invalid request data",
+          errors: validationResult.error.issues,
+        },
+        { status: 400 }
+      );
+    }
+    
+    const validatedBody = validationResult.data;
     // Check if email already exists
-    const existingSignup = await getWaitlistSignupByEmail(body.email);
+    const existingSignup = await getWaitlistSignupByEmail(validatedBody.email);
     if (existingSignup) {
       return NextResponse.json(
         {
@@ -45,19 +58,19 @@ async function handlePost(
     const userAgent = req.headers.get("user-agent") || undefined;
     const forwardedFor = req.headers.get("x-forwarded-for");
     const realIp = req.headers.get("x-real-ip");
-    const ipAddress = forwardedFor?.split(",")[0] || realIp || req.ip || undefined;
+    const ipAddress = forwardedFor?.split(",")[0] || realIp || undefined;
 
     // Prepare signup data
     const signupData: CreateWaitlistSignupData = {
-      email: body.email,
-      estimated_volume: body.estimatedVolume,
-      current_provider: body.currentProvider,
-      referral_source: body.referralSource,
+      email: validatedBody.email,
+      estimated_volume: validatedBody.estimatedVolume,
+      current_provider: validatedBody.currentProvider,
+      referral_source: validatedBody.referralSource,
       user_agent: userAgent,
       ip_address: ipAddress,
-      utm_source: body.utmSource,
-      utm_medium: body.utmMedium,
-      utm_campaign: body.utmCampaign,
+      utm_source: validatedBody.utmSource,
+      utm_medium: validatedBody.utmMedium,
+      utm_campaign: validatedBody.utmCampaign,
     };
 
     // Create waitlist signup
@@ -143,9 +156,14 @@ async function handleGet(req: NextRequest): Promise<NextResponse> {
   }
 }
 
-// Export handlers with middleware
-export const POST = withCors(validateRequest(WaitlistSignupSchema)(handlePost));
-export const GET = withCors(withAuth(handleGet));
+// Export handlers
+export async function POST(req: NextRequest) {
+  return handlePost(req);
+}
+
+export async function GET(req: NextRequest) {
+  return handleGet(req);
+}
 
 // Handle OPTIONS for CORS
 export async function OPTIONS() {

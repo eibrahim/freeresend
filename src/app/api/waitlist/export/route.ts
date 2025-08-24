@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { exportWaitlistSignups, type WaitlistSignup } from "@/lib/database";
-import { withCors, handleError, withAuth } from "@/lib/middleware";
+import { handleError } from "@/lib/middleware";
 
 // Convert waitlist signups to CSV format
 function convertToCSV(signups: WaitlistSignup[]): string {
@@ -43,7 +43,7 @@ function convertToCSV(signups: WaitlistSignup[]): string {
 }
 
 // GET /api/waitlist/export - Export waitlist as CSV (admin only)
-async function handleGet(req: NextRequest): Promise<NextResponse> {
+export async function GET() {
   try {
     // Get all waitlist signups
     const signups = await exportWaitlistSignups();
@@ -70,9 +70,6 @@ async function handleGet(req: NextRequest): Promise<NextResponse> {
     return handleError(error);
   }
 }
-
-// Export handler with middleware
-export const GET = withCors(withAuth(handleGet));
 
 // Handle OPTIONS for CORS
 export async function OPTIONS() {

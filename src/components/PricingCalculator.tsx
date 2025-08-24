@@ -186,7 +186,6 @@ export default function PricingCalculator({
 
   // Legacy variables for backward compatibility
   const hasSavings = bestSavings.amount !== null && bestSavings.amount > 0;
-  const savingsColor = bestSavings.color;
 
   return (
     <div className={`w-full max-w-4xl mx-auto p-6 ${className}`}>

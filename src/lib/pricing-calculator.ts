@@ -177,10 +177,10 @@ export function getFreeResendCost(
 
 /**
  * Get the hosted pricing tier (there's only one)
- * @param volume Monthly email volume
+
  * @returns The single hosted tier
  */
-export function getBestHostedTier(volume: number): HostedPricingTier {
+export function getBestHostedTier(): HostedPricingTier {
   return HOSTED_PRICING_TIERS[0];
 }
 
@@ -217,7 +217,7 @@ export function getHostedCost(volume: number, tier: HostedPricingTier): HostedQu
  * @returns Cost using optimal tier
  */
 export function getFreeResendHostedCost(volume: number): HostedQuote {
-  const bestTier = getBestHostedTier(volume);
+  const bestTier = getBestHostedTier();
   return getHostedCost(volume, bestTier);
 }
 

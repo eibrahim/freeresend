@@ -86,6 +86,25 @@ export default function WaitlistSignup({
   
   const [utmParams, setUtmParams] = useState<UTMParams>({});
 
+  // Analytics tracking function
+  const trackEvent = useCallback((eventName: string, properties: Record<string, unknown> = {}) => {
+    // Track form interactions for analytics
+    if (typeof window !== "undefined" && window.gtag) {
+      window.gtag("event", eventName, {
+        ...properties,
+        timestamp: new Date().toISOString(),
+        user_agent: navigator.userAgent,
+        referrer: document.referrer,
+        ...utmParams,
+      });
+    }
+    
+    // Console log for development
+    if (process.env.NODE_ENV === "development") {
+      console.log("Analytics Event:", eventName, properties);
+    }
+  }, [utmParams]);
+
   // Capture UTM parameters on mount
   useEffect(() => {
     setUtmParams(captureUTMParams());
@@ -96,7 +115,7 @@ export default function WaitlistSignup({
       has_estimated_volume: !!estimatedVolume,
       compact_mode: compact,
     });
-  }, [trackingContext, estimatedVolume, compact]);
+  }, [trackingContext, estimatedVolume, compact, trackEvent]);
 
   // Real-time email validation with debouncing
   useEffect(() => {
@@ -116,25 +135,6 @@ export default function WaitlistSignup({
 
     return () => clearTimeout(timeoutId);
   }, [formState.email]);
-
-  // Analytics tracking function
-  const trackEvent = useCallback((eventName: string, properties: Record<string, any> = {}) => {
-    // Track form interactions for analytics
-    if (typeof window !== "undefined" && window.gtag) {
-      window.gtag("event", eventName, {
-        ...properties,
-        timestamp: new Date().toISOString(),
-        user_agent: navigator.userAgent,
-        referrer: document.referrer,
-        ...utmParams,
-      });
-    }
-    
-    // Console log for development
-    if (process.env.NODE_ENV === "development") {
-      console.log("Analytics Event:", eventName, properties);
-    }
-  }, [utmParams]);
 
   // Optimistic UI update
   const handleOptimisticUpdate = useCallback(() => {
@@ -300,10 +300,10 @@ export default function WaitlistSignup({
         <div className="text-center">
           <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            You're on the waitlist!
+            You&apos;re on the waitlist!
           </h3>
           <p className="text-gray-600 mb-4">
-            We'll notify you when the hosted version becomes available.
+            We&apos;ll notify you when the hosted version becomes available.
           </p>
           {formState.volume && (
             <p className="text-sm text-gray-500">
@@ -471,7 +471,7 @@ export default function WaitlistSignup({
 
       {/* Privacy Note */}
       <p className="mt-4 text-xs text-gray-500 text-center">
-        We'll only use your email to notify you about the hosted version launch.
+        We&apos;ll only use your email to notify you about the hosted version launch.
         No spam, unsubscribe anytime.
       </p>
     </div>

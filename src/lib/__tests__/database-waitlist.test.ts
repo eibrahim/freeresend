@@ -34,7 +34,9 @@ import {
 } from '../database';
 
 // Get access to the mocked pool
-const mockPool = db as any;
+const mockPool = db as {
+  connect: jest.MockedFunction<() => Promise<{ query: jest.MockedFunction<unknown>; release: jest.MockedFunction<unknown> }>>;
+};
 const mockClient = {
   query: jest.fn(),
   release: jest.fn(),
@@ -69,7 +71,7 @@ describe('Waitlist Database Operations', () => {
         updated_at: '2024-01-01T00:00:00Z',
       };
 
-      mockClient.query.mockResolvedValueOnce({ rows: [mockSignup] } as any);
+      mockClient.query.mockResolvedValueOnce({ rows: [mockSignup] });
 
       const data: CreateWaitlistSignupData = {
         email: 'test@example.com',
@@ -111,7 +113,7 @@ describe('Waitlist Database Operations', () => {
         updated_at: '2024-01-01T00:00:00Z',
       };
 
-      mockClient.query.mockResolvedValueOnce({ rows: [mockSignup] } as any);
+      mockClient.query.mockResolvedValueOnce({ rows: [mockSignup] });
 
       const data: CreateWaitlistSignupData = {
         email: 'minimal@example.com',
@@ -157,7 +159,7 @@ describe('Waitlist Database Operations', () => {
         updated_at: '2024-01-01T00:00:00Z',
       };
 
-      mockClient.query.mockResolvedValueOnce({ rows: [mockSignup] } as any);
+      mockClient.query.mockResolvedValueOnce({ rows: [mockSignup] });
 
       const result = await getWaitlistSignupByEmail('existing@example.com');
 
@@ -169,7 +171,7 @@ describe('Waitlist Database Operations', () => {
     });
 
     it('should return null when email does not exist', async () => {
-      mockClient.query.mockResolvedValueOnce({ rows: [] } as any);
+      mockClient.query.mockResolvedValueOnce({ rows: [] });
 
       const result = await getWaitlistSignupByEmail('nonexistent@example.com');
 
@@ -194,7 +196,7 @@ describe('Waitlist Database Operations', () => {
         },
       ];
 
-      mockClient.query.mockResolvedValueOnce({ rows: mockSignups } as any);
+      mockClient.query.mockResolvedValueOnce({ rows: mockSignups });
 
       const result = await getAllWaitlistSignups();
 
@@ -208,7 +210,7 @@ describe('Waitlist Database Operations', () => {
     it('should return paginated signups with custom parameters', async () => {
       const mockSignups: WaitlistSignup[] = [];
 
-      mockClient.query.mockResolvedValueOnce({ rows: mockSignups } as any);
+      mockClient.query.mockResolvedValueOnce({ rows: mockSignups });
 
       const result = await getAllWaitlistSignups(50, 25);
 
@@ -222,7 +224,7 @@ describe('Waitlist Database Operations', () => {
 
   describe('getWaitlistSignupsCount', () => {
     it('should return the total count of signups', async () => {
-      mockClient.query.mockResolvedValueOnce({ rows: [{ count: '42' }] } as any);
+      mockClient.query.mockResolvedValueOnce({ rows: [{ count: '42' }] });
 
       const result = await getWaitlistSignupsCount();
 
@@ -234,7 +236,7 @@ describe('Waitlist Database Operations', () => {
     });
 
     it('should handle zero count', async () => {
-      mockClient.query.mockResolvedValueOnce({ rows: [{ count: '0' }] } as any);
+      mockClient.query.mockResolvedValueOnce({ rows: [{ count: '0' }] });
 
       const result = await getWaitlistSignupsCount();
 
@@ -259,7 +261,7 @@ describe('Waitlist Database Operations', () => {
         },
       ];
 
-      mockClient.query.mockResolvedValueOnce({ rows: mockSignups } as any);
+      mockClient.query.mockResolvedValueOnce({ rows: mockSignups });
 
       const result = await exportWaitlistSignups();
 
@@ -285,13 +287,13 @@ describe('Waitlist Database Operations', () => {
 
       // Mock all the Promise.all queries
       mockClient.query
-        .mockResolvedValueOnce(mockResults[0] as any)
-        .mockResolvedValueOnce(mockResults[1] as any)
-        .mockResolvedValueOnce(mockResults[2] as any)
-        .mockResolvedValueOnce(mockResults[3] as any)
-        .mockResolvedValueOnce(mockResults[4] as any)
-        .mockResolvedValueOnce(mockResults[5] as any)
-        .mockResolvedValueOnce(mockResults[6] as any);
+        .mockResolvedValueOnce(mockResults[0])
+        .mockResolvedValueOnce(mockResults[1])
+        .mockResolvedValueOnce(mockResults[2])
+        .mockResolvedValueOnce(mockResults[3])
+        .mockResolvedValueOnce(mockResults[4])
+        .mockResolvedValueOnce(mockResults[5])
+        .mockResolvedValueOnce(mockResults[6]);
 
       const result = await getWaitlistAnalytics();
 
@@ -327,13 +329,13 @@ describe('Waitlist Database Operations', () => {
       ];
 
       mockClient.query
-        .mockResolvedValueOnce(mockResults[0] as any)
-        .mockResolvedValueOnce(mockResults[1] as any)
-        .mockResolvedValueOnce(mockResults[2] as any)
-        .mockResolvedValueOnce(mockResults[3] as any)
-        .mockResolvedValueOnce(mockResults[4] as any)
-        .mockResolvedValueOnce(mockResults[5] as any)
-        .mockResolvedValueOnce(mockResults[6] as any);
+        .mockResolvedValueOnce(mockResults[0])
+        .mockResolvedValueOnce(mockResults[1])
+        .mockResolvedValueOnce(mockResults[2])
+        .mockResolvedValueOnce(mockResults[3])
+        .mockResolvedValueOnce(mockResults[4])
+        .mockResolvedValueOnce(mockResults[5])
+        .mockResolvedValueOnce(mockResults[6]);
 
       const result = await getWaitlistAnalytics();
 
@@ -374,7 +376,7 @@ describe('Waitlist Database Operations', () => {
         updated_at: '2024-01-01T00:00:00Z',
       };
 
-      mockClient.query.mockResolvedValueOnce({ rows: [mockSignup] } as any);
+      mockClient.query.mockResolvedValueOnce({ rows: [mockSignup] });
 
       const data: CreateWaitlistSignupData = {
         email: 'test@example.com',

@@ -39,8 +39,6 @@ const WaitlistSignupSchema = z.object({
   utmCampaign: z.string().max(100).optional(),
 });
 
-type WaitlistSignupRequest = z.infer<typeof WaitlistSignupSchema>;
-
 describe('Waitlist API Logic', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -226,7 +224,7 @@ describe('Waitlist API Logic', () => {
       expect(signups1).toEqual(mockSignups);
 
       // Test custom pagination
-      const signups2 = await getAllWaitlistSignups(25, 50);
+      await getAllWaitlistSignups(25, 50);
       expect(mockGetAllWaitlistSignups).toHaveBeenCalledWith(25, 50);
     });
 
