@@ -117,6 +117,21 @@ export interface WebhookEvent {
   created_at: string;
 }
 
+export interface WaitlistSignup {
+  id: string;
+  email: string;
+  estimated_volume?: number;
+  current_provider?: string;
+  referral_source?: string;
+  user_agent?: string;
+  ip_address?: string;
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 // Test database connection
 export async function testConnection(): Promise<boolean> {
   try {
@@ -132,4 +147,145 @@ export async function testConnection(): Promise<boolean> {
 // Graceful shutdown
 export async function closeDatabase(): Promise<void> {
   await pool.end();
+}
+
+// Waitlist operations
+export interface CreateWaitlistSignupData {
+  email: string;
+  estimated_volume?: number;
+  current_provider?: string;
+  referral_source?: string;
+  user_agent?: string;
+  ip_address?: string;
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
+}
+
+export interface WaitlistAnalytics {
+  total_signups: number;
+  signups_today: number;
+  signups_this_week: number;
+  signups_this_month: number;
+  avg_estimated_volume: number;
+  top_referral_sources: Array<{ source: string; count: number }>;
+  top_utm_sources: Array<{ source: string; count: number }>;
+}
+
+export async function createWaitlistSignup(data: CreateWaitlistSignupData): Promise<WaitlistSignup> {
+  const result = await query(
+    `INSERT INTO waitlist_signups (
+      email, estimated_volume, current_provider, referral_source, 
+      user_agent, ip_address, utm_source, utm_medium, utm_campaign
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    RETURNING *`,
+    [
+      data.email,
+      data.estimated_volume,
+      data.current_provider,
+      data.referral_source,
+      data.user_agent,
+      data.ip_address,
+      data.utm_source,
+      data.utm_medium,
+      data.utm_campaign,
+    ]
+  );
+  return result.rows[0];
+}
+
+export async function getWaitlistSignupByEmail(email: string): Promise<WaitlistSignup | null> {
+  const result = await query(
+    "SELECT * FROM waitlist_signups WHERE email = $1",
+    [email]
+  );
+  return result.rows[0] || null;
+}
+
+export async function getAllWaitlistSignups(
+  limit: number = 100,
+  offset: number = 0
+): Promise<WaitlistSignup[]> {
+  const result = await query(
+    "SELECT * FROM waitlist_signups ORDER BY created_at DESC LIMIT $1 OFFSET $2",
+    [limit, offset]
+  );
+  return result.rows;
+}
+
+export async function getWaitlistAnalytics(): Promise<WaitlistAnalytics> {
+  const [
+    totalResult,
+    todayResult,
+    weekResult,
+    monthResult,
+    avgVolumeResult,
+    referralSourcesResult,
+    utmSourcesResult,
+  ] = await Promise.all([
+    // Total signups
+    query("SELECT COUNT(*) as count FROM waitlist_signups"),
+    
+    // Signups today
+    query(
+      "SELECT COUNT(*) as count FROM waitlist_signups WHERE created_at >= CURRENT_DATE"
+    ),
+    
+    // Signups this week
+    query(
+      "SELECT COUNT(*) as count FROM waitlist_signups WHERE created_at >= date_trunc('week', CURRENT_DATE)"
+    ),
+    
+    // Signups this month
+    query(
+      "SELECT COUNT(*) as count FROM waitlist_signups WHERE created_at >= date_trunc('month', CURRENT_DATE)"
+    ),
+    
+    // Average estimated volume
+    query(
+      "SELECT AVG(estimated_volume) as avg_volume FROM waitlist_signups WHERE estimated_volume IS NOT NULL"
+    ),
+    
+    // Top referral sources
+    query(
+      `SELECT referral_source as source, COUNT(*) as count 
+       FROM waitlist_signups 
+       WHERE referral_source IS NOT NULL 
+       GROUP BY referral_source 
+       ORDER BY count DESC 
+       LIMIT 10`
+    ),
+    
+    // Top UTM sources
+    query(
+      `SELECT utm_source as source, COUNT(*) as count 
+       FROM waitlist_signups 
+       WHERE utm_source IS NOT NULL 
+       GROUP BY utm_source 
+       ORDER BY count DESC 
+       LIMIT 10`
+    ),
+  ]);
+
+  return {
+    total_signups: parseInt(totalResult.rows[0].count),
+    signups_today: parseInt(todayResult.rows[0].count),
+    signups_this_week: parseInt(weekResult.rows[0].count),
+    signups_this_month: parseInt(monthResult.rows[0].count),
+    avg_estimated_volume: parseFloat(avgVolumeResult.rows[0].avg_volume) || 0,
+    top_referral_sources: referralSourcesResult.rows,
+    top_utm_sources: utmSourcesResult.rows,
+  };
+}
+
+export async function getWaitlistSignupsCount(): Promise<number> {
+  const result = await query("SELECT COUNT(*) as count FROM waitlist_signups");
+  return parseInt(result.rows[0].count);
+}
+
+export async function exportWaitlistSignups(): Promise<WaitlistSignup[]> {
+  const result = await query(
+    "SELECT * FROM waitlist_signups ORDER BY created_at ASC"
+  );
+  return result.rows;
 }
