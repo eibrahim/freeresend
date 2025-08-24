@@ -6,22 +6,22 @@
   - Write unit tests for database operations
   - _Requirements: 2.2, 5.1, 5.2_
 
-- [ ] 2. Implement waitlist API endpoints
-  - [ ] 2.1 Create POST /api/waitlist endpoint for email collection
+- [x] 2. Implement waitlist API endpoints
+  - [x] 2.1 Create POST /api/waitlist endpoint for email collection
     - Implement input validation using Zod schemas
     - Add email format validation and duplicate handling
     - Include metadata collection (referral source, user agent, UTM params)
     - Write comprehensive error handling and response formatting
     - _Requirements: 2.2, 2.4, 2.5, 5.1, 5.2_
 
-  - [ ] 2.2 Create GET /api/waitlist endpoint for admin analytics
+  - [x] 2.2 Create GET /api/waitlist endpoint for admin analytics
     - Implement admin authentication middleware
     - Add analytics calculations (total signups, trends, volume distribution)
     - Include pagination for large datasets
     - Write proper error handling and data formatting
     - _Requirements: 5.3, 5.4_
 
-  - [ ] 2.3 Create GET /api/waitlist/export endpoint for CSV export
+  - [x] 2.3 Create GET /api/waitlist/export endpoint for CSV export
     - Implement CSV generation functionality
     - Add proper file headers and download handling
     - Include admin authentication and rate limiting
