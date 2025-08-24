@@ -8,6 +8,7 @@ import {
   type CreateWaitlistSignupData,
 } from "@/lib/database";
 import { withCors, validateRequest, handleError, withAuth } from "@/lib/middleware";
+import { sendWaitlistNotification, sendWelcomeEmail } from "@/lib/notifications";
 
 // Validation schema for waitlist signup
 const WaitlistSignupSchema = z.object({
@@ -61,6 +62,29 @@ async function handlePost(
 
     // Create waitlist signup
     const signup = await createWaitlistSignup(signupData);
+
+    // Send notifications asynchronously (don't wait for them to complete)
+    Promise.all([
+      // Send admin notification
+      sendWaitlistNotification({
+        email: signup.email,
+        estimatedVolume: signup.estimated_volume,
+        currentProvider: signup.current_provider,
+        referralSource: signup.referral_source,
+        utmSource: signup.utm_source,
+        utmMedium: signup.utm_medium,
+        utmCampaign: signup.utm_campaign,
+        ipAddress: signup.ip_address,
+        userAgent: signup.user_agent,
+        signupId: signup.id,
+        createdAt: signup.created_at,
+      }),
+      // Send welcome email to user
+      sendWelcomeEmail(signup.email, signup.id),
+    ]).catch((error) => {
+      console.error("Failed to send waitlist notifications:", error);
+      // Don't fail the request if notifications fail
+    });
 
     return NextResponse.json(
       {

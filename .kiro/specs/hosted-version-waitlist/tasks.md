@@ -58,15 +58,15 @@
     - Write integration tests for calculator-waitlist flow
     - _Requirements: 3.5, 2.1, 6.1, 6.4_
 
-- [ ] 5. Update homepage with pricing discovery features
-  - [ ] 5.1 Add pricing section to homepage hero
+- [x] 5. Update homepage with pricing discovery features
+  - [x] 5.1 Add pricing section to homepage hero
     - Create prominent "See Pricing" call-to-action in hero section
     - Add pricing teaser with key savings highlights
     - Include hosted version messaging and value proposition
     - Implement consistent styling with existing design system
     - _Requirements: 1.1, 1.2, 1.3, 6.1, 6.3_
 
-  - [ ] 5.2 Enhance benefits section with pricing focus
+  - [x] 5.2 Enhance benefits section with pricing focus
     - Add cost savings calculator preview in benefits section
     - Include competitive comparison highlights
     - Create smooth navigation flow to pricing page
