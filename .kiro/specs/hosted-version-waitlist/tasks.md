@@ -43,15 +43,15 @@
     - Write component tests for all user interactions
     - _Requirements: 2.2, 2.3, 2.4, 6.3_
 
-- [ ] 4. Enhance PricingCalculator with hosted version pricing
-  - [ ] 4.1 Add hosted pricing tiers and calculations
+- [x] 4. Enhance PricingCalculator with hosted version pricing
+  - [x] 4.1 Add hosted pricing tiers and calculations
     - Implement hosted version pricing model (Starter, Professional, Enterprise)
     - Add pricing comparison calculations between self-hosted, hosted, and Resend
     - Include tier recommendations based on volume
     - Write unit tests for pricing calculations
     - _Requirements: 3.1, 3.2, 3.3, 4.1, 4.2, 4.3_
 
-  - [ ] 4.2 Integrate waitlist signup into pricing calculator
+  - [x] 4.2 Integrate waitlist signup into pricing calculator
     - Add waitlist signup form integration within calculator
     - Implement volume pre-population from calculator state
     - Include seamless user experience between calculation and signup
