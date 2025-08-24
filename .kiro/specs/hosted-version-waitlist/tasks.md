@@ -88,60 +88,74 @@
     - Write integration tests for dashboard functionality
     - _Requirements: 5.3, 6.1, 6.3_
 
-- [ ] 7. Enhance pricing page with waitlist integration
-  - [ ] 7.1 Update pricing page layout and content
+- [x] 7. Enhance pricing page with waitlist integration
+  - [x] 7.1 Update pricing page layout and content
     - Add hosted version pricing tiers display
     - Include competitive analysis section with clear savings
     - Integrate waitlist signup prominently on the page
     - Update page metadata and SEO optimization
     - _Requirements: 2.1, 4.1, 4.2, 4.3, 6.1_
 
-  - [ ] 7.2 Add pricing strategy and FAQ sections
+  - [x] 7.2 Add pricing strategy and FAQ sections
     - Create hosted vs self-hosted comparison section
     - Add frequently asked questions about hosted version
     - Include clear messaging about availability and timeline
     - Write comprehensive content for pricing transparency
     - _Requirements: 4.1, 4.2, 4.3, 4.4_
 
-- [ ] 8. Implement comprehensive testing suite
-  - [ ] 8.1 Write API endpoint tests
+- [ ] 8. Fix minor API issues and enhance error handling
+  - [ ] 8.1 Fix NextRequest IP property issue in waitlist API
+    - Remove usage of non-existent req.ip property
+    - Use proper IP extraction from headers only
+    - Test IP address capture functionality
+    - _Requirements: 2.2, 5.1_
+
+  - [ ] 8.2 Add notification system implementation
+    - Implement sendWaitlistNotification function in lib/notifications.ts
+    - Add sendWelcomeEmail function for user confirmation
+    - Include proper error handling for notification failures
+    - Write tests for notification functionality
+    - _Requirements: 2.2, 5.2_
+
+- [ ] 9. Implement comprehensive testing suite
+  - [x] 9.1 Write API endpoint tests
     - Create integration tests for all waitlist API endpoints
     - Test error handling, validation, and edge cases
     - Include rate limiting and security testing
     - Add database transaction and rollback testing
     - _Requirements: 2.2, 2.4, 2.5, 5.1, 5.2_
 
-  - [ ] 8.2 Write component and integration tests
+  - [ ] 9.2 Write component and integration tests
     - Create tests for WaitlistSignup component interactions
     - Test enhanced PricingCalculator functionality
     - Add end-to-end tests for complete user flows
     - Include admin dashboard and export functionality testing
     - _Requirements: 2.1, 2.3, 3.5, 5.3, 6.1_
 
-- [ ] 9. Add monitoring and analytics implementation
-  - [ ] 9.1 Implement waitlist analytics tracking
+- [ ] 10. Add monitoring and analytics implementation
+  - [ ] 10.1 Implement waitlist analytics tracking
     - Add conversion tracking for pricing page to waitlist signup
     - Implement UTM parameter tracking and attribution
     - Create analytics dashboard for signup metrics
     - Add error monitoring and alerting for waitlist functionality
     - _Requirements: 5.2, 5.3_
 
-  - [ ] 9.2 Add performance monitoring and optimization
+  - [ ] 10.2 Add performance monitoring and optimization
     - Implement caching for pricing calculations and analytics
     - Add database query optimization for waitlist operations
     - Include rate limiting and abuse prevention
     - Write performance tests for high-traffic scenarios
     - _Requirements: 2.5, 5.1, 5.3_
 
-- [ ] 10. Final integration and deployment preparation
-  - [ ] 10.1 Complete end-to-end testing and validation
+- [ ] 11. Final integration and deployment preparation
+  - [ ] 11.1 Complete end-to-end testing and validation
     - Test complete user journey from homepage to waitlist signup
     - Validate admin functionality and data export capabilities
     - Ensure responsive design and accessibility compliance
     - Perform security audit of new endpoints and functionality
     - _Requirements: 1.1, 1.2, 2.1, 5.4, 6.4_
 
-  - [ ] 10.2 Update documentation and deployment configuration
+  - [ ] 11.2 Update documentation and deployment configuration
     - Update database migration scripts for production deployment
     - Add environment variable documentation for new features
     - Create admin user guide for waitlist management
