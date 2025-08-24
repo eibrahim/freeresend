@@ -53,9 +53,15 @@ export default function LandingPage() {
               </a>
               <Link
                 href="/login"
+                className="text-gray-600 hover:text-gray-900 transition-colors px-3 py-2"
+              >
+                Login
+              </Link>
+              <Link
+                href="/pricing"
                 className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
               >
-                <span>Get Started</span>
+                <span>Join Waitlist</span>
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
@@ -86,13 +92,20 @@ export default function LandingPage() {
             email infrastructure
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
             <Link
-              href="/login"
+              href="/pricing"
               className="bg-blue-600 text-white px-8 py-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2 font-semibold"
             >
-              <span>Start Free</span>
+              <span>Join Waitlist</span>
               <ArrowRight className="h-5 w-5" />
+            </Link>
+            <Link
+              href="/pricing"
+              className="border-2 border-blue-600 text-blue-600 px-8 py-4 rounded-lg hover:bg-blue-50 transition-colors flex items-center justify-center space-x-2 font-semibold"
+            >
+              <DollarSign className="h-5 w-5" />
+              <span>See Pricing</span>
             </Link>
             <a
               href="https://github.com/eibrahim/freeresend"
@@ -103,6 +116,50 @@ export default function LandingPage() {
               <Github className="h-5 w-5" />
               <span>View on GitHub</span>
             </a>
+          </div>
+          
+          <div className="text-center mb-8">
+            <p className="text-sm text-gray-500">
+              Already have an account?{" "}
+              <Link href="/login" className="text-blue-600 hover:text-blue-700 font-medium">
+                Login here
+              </Link>
+            </p>
+          </div>
+
+          {/* Pricing Teaser */}
+          <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-6 mb-12 max-w-4xl mx-auto">
+            <div className="text-center">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                🚀 Hosted Version Coming Soon
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Skip the setup and let us handle the infrastructure. Same great savings, zero maintenance.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div className="bg-white rounded-lg p-4 border border-gray-100">
+                  <div className="font-semibold text-green-600">50-85% Savings</div>
+                  <div className="text-gray-500">vs. premium services</div>
+                </div>
+                <div className="bg-white rounded-lg p-4 border border-gray-100">
+                  <div className="font-semibold text-blue-600">Fully Managed</div>
+                  <div className="text-gray-500">No server maintenance</div>
+                </div>
+                <div className="bg-white rounded-lg p-4 border border-gray-100">
+                  <div className="font-semibold text-purple-600">API Compatible</div>
+                  <div className="text-gray-500">Drop-in Resend replacement</div>
+                </div>
+              </div>
+              <div className="mt-4">
+                <Link
+                  href="/pricing"
+                  className="inline-flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  <span>Calculate your savings</span>
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+            </div>
           </div>
 
           {/* Migration Code Example */}
@@ -155,10 +212,23 @@ export default function LandingPage() {
               <h4 className="text-xl font-semibold text-gray-900 mb-4">
                 85% Cost Savings
               </h4>
-              <p className="text-gray-600 leading-relaxed">
+              <p className="text-gray-600 leading-relaxed mb-4">
                 Pay Amazon SES rates ($0.10/1k emails) instead of premium
                 pricing. Save hundreds annually across multiple projects.
               </p>
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-sm">
+                <div className="font-semibold text-green-800 mb-1">Quick Example:</div>
+                <div className="text-green-700">
+                  100k emails/month: <span className="font-semibold">$10</span> vs Resend&apos;s <span className="line-through">$100</span>
+                </div>
+                <Link
+                  href="/pricing"
+                  className="inline-flex items-center space-x-1 text-green-600 hover:text-green-700 font-medium mt-2"
+                >
+                  <span>Calculate your savings</span>
+                  <ArrowRight className="h-3 w-3" />
+                </Link>
+              </div>
             </div>
 
             <div className="text-center group">
@@ -168,10 +238,23 @@ export default function LandingPage() {
               <h4 className="text-xl font-semibold text-gray-900 mb-4">
                 Drop-in Compatible
               </h4>
-              <p className="text-gray-600 leading-relaxed">
+              <p className="text-gray-600 leading-relaxed mb-4">
                 100% API compatibility with Resend. Zero code changes required -
                 just update your environment variable.
               </p>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm">
+                <div className="font-semibold text-blue-800 mb-1">Hosted Version:</div>
+                <div className="text-blue-700">
+                  Same compatibility, zero maintenance. Join the waitlist for early access.
+                </div>
+                <Link
+                  href="/pricing"
+                  className="inline-flex items-center space-x-1 text-blue-600 hover:text-blue-700 font-medium mt-2"
+                >
+                  <span>Learn about pricing</span>
+                  <ArrowRight className="h-3 w-3" />
+                </Link>
+              </div>
             </div>
 
             <div className="text-center group">
@@ -181,10 +264,23 @@ export default function LandingPage() {
               <h4 className="text-xl font-semibold text-gray-900 mb-4">
                 Lightning Setup
               </h4>
-              <p className="text-gray-600 leading-relaxed">
+              <p className="text-gray-600 leading-relaxed mb-4">
                 Auto-creates DNS records with Digital Ocean. From domain to
                 sending emails in under 60 seconds.
               </p>
+              <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 text-sm">
+                <div className="font-semibold text-purple-800 mb-1">Even Faster:</div>
+                <div className="text-purple-700">
+                  Hosted version = instant setup. No servers, no configuration.
+                </div>
+                <Link
+                  href="/pricing"
+                  className="inline-flex items-center space-x-1 text-purple-600 hover:text-purple-700 font-medium mt-2"
+                >
+                  <span>See hosted pricing</span>
+                  <ArrowRight className="h-3 w-3" />
+                </Link>
+              </div>
             </div>
           </div>
         </div>
@@ -350,10 +446,10 @@ export default function LandingPage() {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href="/login"
+              href="/pricing"
               className="bg-white text-blue-600 px-8 py-4 rounded-lg hover:bg-gray-100 transition-colors flex items-center justify-center space-x-2 font-semibold"
             >
-              <span>Start Free Today</span>
+              <span>Join Waitlist Today</span>
               <ArrowRight className="h-5 w-5" />
             </Link>
             <a
