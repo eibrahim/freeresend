@@ -45,3 +45,4 @@ next-env.d.ts
 # secrets and sensitive files
 k8s/secret.yaml
 *.secret.yaml
+docs/marketing/*
