@@ -93,6 +93,12 @@ class ApiClient {
     });
   }
 
+  async retryDigitalOceanDNS(id: string) {
+    return this.request(`/domains/${id}/retry-dns`, {
+      method: "POST",
+    });
+  }
+
   // API Keys
   async getApiKeys() {
     return this.request("/api-keys");

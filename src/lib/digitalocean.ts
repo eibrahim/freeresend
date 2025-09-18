@@ -15,7 +15,47 @@ const doClient = axios.create({
     Authorization: `Bearer ${DO_API_TOKEN}`,
     "Content-Type": "application/json",
   },
+  timeout: 10000, // 10 second timeout
 });
+
+// Helper function to add retry logic with exponential backoff
+async function retryRequest<T>(
+  requestFn: () => Promise<T>,
+  maxRetries: number = 3,
+  baseDelay: number = 1000
+): Promise<T> {
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await requestFn();
+    } catch (error: unknown) {
+      lastError = error;
+      const axiosError = error as { response?: { status?: number } };
+
+      // Don't retry on non-rate-limiting errors
+      if (axiosError.response?.status !== 429 && attempt === 0) {
+        throw error;
+      }
+
+      // Don't retry on last attempt
+      if (attempt === maxRetries) {
+        break;
+      }
+
+      // Exponential backoff with jitter
+      const delay = baseDelay * Math.pow(2, attempt) + Math.random() * 1000;
+      console.log(
+        `DO API rate limited, retrying in ${Math.round(delay)}ms (attempt ${
+          attempt + 1
+        }/${maxRetries + 1})`
+      );
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
+
+  throw lastError;
+}
 
 export interface DNSRecord {
   type: string;
@@ -50,10 +90,15 @@ export async function getDomains(): Promise<DODomain[]> {
   }
 
   try {
-    const response = await doClient.get("/domains");
+    const response = await retryRequest(async () => {
+      return await doClient.get("/domains");
+    });
     return response.data.domains;
   } catch (error: unknown) {
-    const axiosError = error as { response?: { data?: { message?: string } }; message?: string };
+    const axiosError = error as {
+      response?: { data?: { message?: string } };
+      message?: string;
+    };
     throw new Error(
       `Failed to fetch domains: ${
         axiosError.response?.data?.message || axiosError.message
@@ -70,10 +115,15 @@ export async function getDomainRecords(
   }
 
   try {
-    const response = await doClient.get(`/domains/${domain}/records`);
+    const response = await retryRequest(async () => {
+      return await doClient.get(`/domains/${domain}/records`);
+    });
     return response.data.domain_records;
   } catch (error: unknown) {
-    const axiosError = error as { response?: { data?: { message?: string } }; message?: string };
+    const axiosError = error as {
+      response?: { data?: { message?: string } };
+      message?: string;
+    };
     throw new Error(
       `Failed to fetch domain records: ${
         axiosError.response?.data?.message || axiosError.message
@@ -109,14 +159,27 @@ export async function createDNSRecord(
           hostname += ".";
         }
         payload.data = hostname;
-        (payload as { data: string; priority: number; type: string; name: string; ttl: number }).priority = parseInt(parts[0]);
+        (
+          payload as {
+            data: string;
+            priority: number;
+            type: string;
+            name: string;
+            ttl: number;
+          }
+        ).priority = parseInt(parts[0]);
       }
     }
 
-    const response = await doClient.post(`/domains/${domain}/records`, payload);
+    const response = await retryRequest(async () => {
+      return await doClient.post(`/domains/${domain}/records`, payload);
+    });
     return response.data.domain_record;
   } catch (error: unknown) {
-    const axiosError = error as { response?: { data?: { message?: string } }; message?: string };
+    const axiosError = error as {
+      response?: { data?: { message?: string } };
+      message?: string;
+    };
     throw new Error(
       `Failed to create DNS record: ${
         axiosError.response?.data?.message || axiosError.message
@@ -151,7 +214,10 @@ export async function updateDNSRecord(
     );
     return response.data.domain_record;
   } catch (error: unknown) {
-    const axiosError = error as { response?: { data?: { message?: string } }; message?: string };
+    const axiosError = error as {
+      response?: { data?: { message?: string } };
+      message?: string;
+    };
     throw new Error(
       `Failed to update DNS record: ${
         axiosError.response?.data?.message || axiosError.message
@@ -171,7 +237,10 @@ export async function deleteDNSRecord(
   try {
     await doClient.delete(`/domains/${domain}/records/${recordId}`);
   } catch (error: unknown) {
-    const axiosError = error as { response?: { data?: { message?: string } }; message?: string };
+    const axiosError = error as {
+      response?: { data?: { message?: string } };
+      message?: string;
+    };
     throw new Error(
       `Failed to delete DNS record: ${
         axiosError.response?.data?.message || axiosError.message
@@ -190,6 +259,13 @@ export async function setupDomainDNS(
     );
     return [];
   }
+
+  // Add random delay to avoid concurrent calls from multiple replicas
+  const replicaDelay = Math.random() * 2000; // 0-2 seconds
+  console.log(
+    `Waiting ${Math.round(replicaDelay)}ms to coordinate between replicas...`
+  );
+  await new Promise((resolve) => setTimeout(resolve, replicaDelay));
 
   try {
     // First, check if the domain exists in Digital Ocean
@@ -260,8 +336,8 @@ export async function setupDomainDNS(
           }
         }
 
-        // Small delay to avoid rate limiting
-        await new Promise((resolve) => setTimeout(resolve, 100));
+        // Longer delay to avoid rate limiting (especially with multiple replicas)
+        await new Promise((resolve) => setTimeout(resolve, 500));
       } catch (error) {
         console.error(`Failed to create DNS record for ${record.name}:`, error);
         // Continue with other records even if one fails

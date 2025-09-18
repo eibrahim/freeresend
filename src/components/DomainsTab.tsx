@@ -7,7 +7,13 @@ interface Domain {
   id: string;
   domain: string;
   status: "pending" | "verified" | "failed";
-  dns_records: Array<{ type: string; name: string; value: string; ttl?: number; description?: string }>;
+  dns_records: Array<{
+    type: string;
+    name: string;
+    value: string;
+    ttl?: number;
+    description?: string;
+  }>;
   created_at: string;
 }
 
@@ -17,6 +23,7 @@ export default function DomainsTab() {
   const [addingDomain, setAddingDomain] = useState(false);
   const [newDomain, setNewDomain] = useState("");
   const [showDNSModal, setShowDNSModal] = useState<Domain | null>(null);
+  const [syncingToDO, setSyncingToDO] = useState(false);
 
   useEffect(() => {
     loadDomains();
@@ -71,6 +78,30 @@ export default function DomainsTab() {
     } catch (error: unknown) {
       const errorObj = error as { message?: string };
       alert(errorObj.message || "Failed to delete domain");
+    }
+  };
+
+  const handleSyncToDigitalOcean = async (domainId: string) => {
+    if (
+      !confirm(
+        "This will create DNS records in your DigitalOcean account. Continue?"
+      )
+    )
+      return;
+
+    setSyncingToDO(true);
+    try {
+      const response = await api.retryDigitalOceanDNS(domainId);
+      alert(`Success: ${response.message}`);
+      // Optionally refresh domains to show updated status
+      await loadDomains();
+    } catch (error: unknown) {
+      const errorObj = error as { message?: string };
+      alert(
+        `Failed to sync to DigitalOcean: ${errorObj.message || "Unknown error"}`
+      );
+    } finally {
+      setSyncingToDO(false);
     }
   };
 
@@ -212,33 +243,48 @@ export default function DomainsTab() {
               </p>
 
               <div className="space-y-4">
-                {showDNSModal.dns_records?.map((record: { type: string; name: string; value: string; ttl?: number; description?: string }, index: number) => (
-                  <div key={index} className="bg-gray-50 p-4 rounded-lg">
-                    <div className="grid grid-cols-3 gap-4 text-sm">
-                      <div>
-                        <span className="font-medium text-gray-700">Type:</span>
-                        <div className="mt-1">{record.type}</div>
-                      </div>
-                      <div>
-                        <span className="font-medium text-gray-700">Name:</span>
-                        <div className="mt-1 break-all">{record.name}</div>
-                      </div>
-                      <div>
-                        <span className="font-medium text-gray-700">
-                          Value:
-                        </span>
-                        <div className="mt-1 break-all font-mono text-xs bg-white p-2 rounded border">
-                          {record.value}
+                {showDNSModal.dns_records?.map(
+                  (
+                    record: {
+                      type: string;
+                      name: string;
+                      value: string;
+                      ttl?: number;
+                      description?: string;
+                    },
+                    index: number
+                  ) => (
+                    <div key={index} className="bg-gray-50 p-4 rounded-lg">
+                      <div className="grid grid-cols-3 gap-4 text-sm">
+                        <div>
+                          <span className="font-medium text-gray-700">
+                            Type:
+                          </span>
+                          <div className="mt-1">{record.type}</div>
+                        </div>
+                        <div>
+                          <span className="font-medium text-gray-700">
+                            Name:
+                          </span>
+                          <div className="mt-1 break-all">{record.name}</div>
+                        </div>
+                        <div>
+                          <span className="font-medium text-gray-700">
+                            Value:
+                          </span>
+                          <div className="mt-1 break-all font-mono text-xs bg-white p-2 rounded border">
+                            {record.value}
+                          </div>
                         </div>
                       </div>
+                      {record.description && (
+                        <div className="mt-2 text-xs text-gray-500">
+                          {record.description}
+                        </div>
+                      )}
                     </div>
-                    {record.description && (
-                      <div className="mt-2 text-xs text-gray-500">
-                        {record.description}
-                      </div>
-                    )}
-                  </div>
-                ))}
+                  )
+                )}
               </div>
 
               <div className="mt-6 flex justify-end space-x-3">
@@ -247,6 +293,13 @@ export default function DomainsTab() {
                   className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
                 >
                   Close
+                </button>
+                <button
+                  onClick={() => handleSyncToDigitalOcean(showDNSModal.id)}
+                  disabled={syncingToDO}
+                  className="px-4 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-md"
+                >
+                  {syncingToDO ? "Syncing..." : "Sync to DigitalOcean"}
                 </button>
                 <button
                   onClick={() => {
