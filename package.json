@@ -33,6 +33,7 @@
     "test:coverage": "jest --coverage"
   },
   "dependencies": {
+    "@aws-sdk/client-iam": "^3.899.0",
     "@aws-sdk/client-ses": "^3.682.0",
     "@types/pg": "^8.15.5",
     "axios": "^1.7.9",
@@ -43,6 +44,7 @@
     "nanoid": "^5.0.9",
     "next": "15.4.6",
     "next-auth": "^4.24.10",
+    "nodemailer": "^6.10.1",
     "pg": "^8.16.3",
     "react": "19.1.0",
     "react-dom": "19.1.0",

@@ -7,9 +7,9 @@ const pool = new Pool({
     rejectUnauthorized: false,
     ca: undefined,
   },
-  max: 20, // Maximum number of clients in the pool
-  idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
-  connectionTimeoutMillis: 2000, // Return an error after 2 seconds if connection could not be established
+  max: 5, // Maximum number of clients in the pool (reduced from 20)
+  idleTimeoutMillis: 10000, // Close idle clients after 10 seconds (reduced from 30s)
+  connectionTimeoutMillis: 5000, // Return an error after 5 seconds if connection could not be established
 });
 
 // Export the pool for direct access if needed
@@ -64,6 +64,12 @@ export interface Domain {
   ses_configuration_set?: string;
   do_domain_id?: string;
   dns_records: unknown[];
+  smtp_credentials?: {
+    username: string;
+    password: string;
+    server: string;
+    port: number;
+  };
   created_at: string;
   updated_at: string;
 }

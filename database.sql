@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS domains (
   do_domain_id VARCHAR(255),
   dns_records JSONB DEFAULT '[]',
   verification_token VARCHAR(255),
+  smtp_credentials JSONB, -- Stores encrypted SMTP username/password
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
