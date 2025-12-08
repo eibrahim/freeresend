@@ -71,6 +71,7 @@ jobs:
           --from-literal=DO_API_TOKEN="${{ secrets.DO_API_TOKEN }}" \
           --from-literal=ADMIN_EMAIL="${{ secrets.ADMIN_EMAIL }}" \
           --from-literal=ADMIN_PASSWORD="${{ secrets.ADMIN_PASSWORD }}" \
+          --from-literal=STATS_API_KEY="${{ secrets.STATS_API_KEY }}" \
           -n freeresend \
           --dry-run=client -o yaml | kubectl apply -f -
         
