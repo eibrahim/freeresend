@@ -42,7 +42,7 @@
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.539.0",
     "nanoid": "^5.0.9",
-    "next": "^15.4.8",
+    "next": "^15.3.8",
     "next-auth": "^4.24.10",
     "nodemailer": "^6.10.1",
     "pg": "^8.16.3",
