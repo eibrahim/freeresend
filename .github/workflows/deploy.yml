@@ -59,22 +59,10 @@ jobs:
       run: |
         # Apply namespace first
         kubectl apply -f k8s/namespace.yaml
-        
-        # Create secrets from GitHub secrets
-        kubectl create secret generic freeresend-secrets \
-          --from-literal=NEXTAUTH_URL="https://www.freeresend.com" \
-          --from-literal=NEXTAUTH_SECRET="${{ secrets.NEXTAUTH_SECRET }}" \
-          --from-literal=DATABASE_URL="${{ secrets.DATABASE_URL }}" \
-          --from-literal=AWS_REGION="us-east-1" \
-          --from-literal=AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" \
-          --from-literal=AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" \
-          --from-literal=DO_API_TOKEN="${{ secrets.DO_API_TOKEN }}" \
-          --from-literal=ADMIN_EMAIL="${{ secrets.ADMIN_EMAIL }}" \
-          --from-literal=ADMIN_PASSWORD="${{ secrets.ADMIN_PASSWORD }}" \
-          --from-literal=STATS_API_KEY="${{ secrets.STATS_API_KEY }}" \
-          -n freeresend \
-          --dry-run=client -o yaml | kubectl apply -f -
-        
+
+        # Note: Secrets are managed manually via kubectl apply -f k8s/secret.yaml
+        # This avoids overwriting secrets on every deploy
+
         # Apply application manifests
         kubectl apply -f k8s/deployment.yaml
         kubectl apply -f k8s/service.yaml
