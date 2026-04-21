@@ -1,0 +1,55 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: report-stats
+  namespace: freeresend
+spec:
+  # Daily at 07:00 UTC
+  schedule: "0 7 * * *"
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: curl
+              image: curlimages/curl:8.5.0
+              args:
+                - /bin/sh
+                - -c
+                - |
+                  echo "Reporting stats to EC Dashboard..."
+                  response=$(curl -s -w "\n%{http_code}" -X POST \
+                    -H "x-cron-secret: ${CRON_SECRET}" \
+                    http://freeresend/api/cron/report-stats)
+
+                  http_code=$(echo "$response" | tail -n1)
+                  body=$(echo "$response" | sed '$d')
+
+                  echo "Response: $body"
+                  echo "HTTP Status: $http_code"
+
+                  if [ "$http_code" -ge 200 ] && [ "$http_code" -lt 300 ]; then
+                    echo "Stats reported successfully"
+                    exit 0
+                  else
+                    echo "Stats report failed"
+                    exit 1
+                  fi
+              env:
+                - name: CRON_SECRET
+                  valueFrom:
+                    secretKeyRef:
+                      name: freeresend-secrets
+                      key: CRON_SECRET
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 32Mi
+                limits:
+                  cpu: 100m
+                  memory: 64Mi
