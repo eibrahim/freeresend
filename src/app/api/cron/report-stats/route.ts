@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { collectStandardMetrics, reportStats } from "@/lib/stats-reporter";
+import { collectUmamiMetrics, UMAMI_METRIC_DEFINITIONS } from "@/lib/stats-umami";
+import { collectStripeMetrics, STRIPE_METRIC_DEFINITIONS } from "@/lib/stats-stripe";
 import { customMetrics, metricDefinitions } from "@/config/stats";
 
 export const dynamic = "force-dynamic";
@@ -30,14 +32,16 @@ export async function POST(req: Request) {
     });
   }
 
-  let standardMetrics, custom;
+  let standardMetrics, custom, umami, stripeM;
   try {
-    [standardMetrics, custom] = await Promise.all([
+    [standardMetrics, custom, umami, stripeM] = await Promise.all([
       collectStandardMetrics(),
       customMetrics().catch((e) => {
         console.warn("[stats-reporter] customMetrics threw:", (e as Error).message);
         return [];
       }),
+      collectUmamiMetrics(),
+      collectStripeMetrics(),
     ]);
   } catch (err) {
     return NextResponse.json({
@@ -51,8 +55,8 @@ export async function POST(req: Request) {
     slug,
     secret,
     standardMetrics,
-    customMetrics: custom,
-    definitions: metricDefinitions,
+    customMetrics: [...custom, ...umami, ...stripeM],
+    definitions: [...UMAMI_METRIC_DEFINITIONS, ...STRIPE_METRIC_DEFINITIONS, ...metricDefinitions],
     dryRun,
   });
 
