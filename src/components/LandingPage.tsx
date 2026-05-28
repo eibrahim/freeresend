@@ -14,6 +14,7 @@ import {
   Github,
   Copy,
   CheckCircle,
+  MailCheck,
 } from "lucide-react";
 import EnvelopeIcon from "./EnvelopeIcon";
 import DeploymentReviewCta from "./DeploymentReviewCta";
@@ -60,6 +61,12 @@ export default function LandingPage() {
                 className="hidden text-gray-600 transition-colors hover:text-gray-900 md:inline"
               >
                 Launch Kit
+              </Link>
+              <Link
+                href="/tools/email-dns-checker"
+                className="hidden text-gray-600 transition-colors hover:text-gray-900 lg:inline"
+              >
+                DNS Check
               </Link>
               <Link
                 href={deploymentReview.productUrl}
@@ -139,6 +146,13 @@ export default function LandingPage() {
             >
               <BookOpenCheck className="h-5 w-5" />
               <span>Launch Kit</span>
+            </Link>
+            <Link
+              href="/tools/email-dns-checker"
+              className="border-2 border-gray-200 bg-white text-gray-700 px-8 py-4 rounded-lg hover:border-gray-300 transition-colors flex items-center justify-center space-x-2 font-semibold"
+            >
+              <MailCheck className="h-5 w-5" />
+              <span>DNS Check</span>
             </Link>
           </div>
           
@@ -530,6 +544,14 @@ export default function LandingPage() {
                     className="text-gray-400 hover:text-white transition-colors"
                   >
                     Deployment Review
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/tools/email-dns-checker"
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    DNS Readiness Checker
                   </Link>
                 </li>
                 <li>

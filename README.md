@@ -10,6 +10,8 @@ FreeResend allows you to host your own email service using Amazon SES and option
 
 > 🔎 **Want a second set of eyes before launch?** The optional [$12 FreeResend Deployment Review](https://www.freeresend.com/deployment-review) is a narrow manual review of one self-hosted rollout plan. Stripe collects your deployment URL or GitHub issue and main SES/DNS concern. You can also [book it directly on Stripe](https://buy.stripe.com/5kQ8wR2tj0OHg4S5ZA8so04).
 
+> 📬 **Checking DNS before SES launch?** Run the free [Email DNS Readiness Checker](https://www.freeresend.com/tools/email-dns-checker) for SPF, DMARC, DKIM, and MX records before sending production traffic.
+
 ## Features
 
 - 🚀 **100% Resend-compatible** - True drop-in replacement using environment variables
@@ -408,6 +410,7 @@ MIT License - see LICENSE file for details.
 - 📖 **Documentation**: Check SETUP.md for detailed setup instructions
 - 🧭 **Launch Kit**: Optional [$12 self-hosted deployment checklist](https://www.freeresend.com/launch-kit)
 - 🔎 **Deployment Review**: Optional [$12 one-page review of your SES, DNS, webhook, and launch-risk plan](https://www.freeresend.com/deployment-review)
+- 📬 **DNS Checker**: Free [email DNS readiness checker](https://www.freeresend.com/tools/email-dns-checker) for SPF, DMARC, DKIM, and MX records
 - 🐛 **Issues**: Report bugs via [GitHub Issues](https://github.com/eibrahim/freeresend/issues)
 - 💡 **Feature Requests**: Suggest improvements via GitHub Issues
 - 🚀 **Professional Support**: Custom development and enterprise support available via [EliteCoders](https://elitecoders.co/)

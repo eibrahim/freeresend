@@ -70,10 +70,11 @@ export default function DeploymentReviewPage() {
                 <ExternalLink className="h-4 w-4" />
               </a>
               <Link
-                href="#scope"
+                href="/tools/email-dns-checker"
                 className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-6 py-3 font-semibold text-gray-700 transition-colors hover:border-gray-300"
               >
-                <span>Review scope</span>
+                <MailCheck className="h-4 w-4" />
+                <span>Run DNS check</span>
               </Link>
             </div>
             <p className="mt-4 text-sm text-gray-500">
