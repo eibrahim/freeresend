@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import EmailDnsChecker from "@/components/EmailDnsChecker";
-import { deploymentReview, launchKit } from "@/config/launch-kit";
+import { deploymentReview, launchKit, sesProductionGuide } from "@/config/launch-kit";
 
 export const metadata: Metadata = {
   title: "Email DNS Readiness Checker",
@@ -26,6 +26,9 @@ export default function EmailDnsCheckerPage() {
           <div className="flex items-center gap-4 text-sm font-medium">
             <Link href={launchKit.productUrl} className="text-gray-600 hover:text-gray-950">
               Launch Kit
+            </Link>
+            <Link href={sesProductionGuide.productUrl} className="text-gray-600 hover:text-gray-950">
+              Guide
             </Link>
             <Link href={deploymentReview.productUrl} className="text-gray-600 hover:text-gray-950">
               Review

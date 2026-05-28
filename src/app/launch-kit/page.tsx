@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, CheckCircle2, ExternalLink, ServerCog, ShieldCheck, Workflow } from "lucide-react";
-import { deploymentReview, launchKit } from "@/config/launch-kit";
+import { deploymentReview, launchKit, sesProductionGuide } from "@/config/launch-kit";
 
 export const metadata: Metadata = {
   title: "FreeResend Self-Hosted Launch Kit",
@@ -42,14 +42,19 @@ export default function LaunchKitPage() {
           <Link href="/" className="text-sm font-medium text-gray-600 hover:text-gray-900">
             FreeResend
           </Link>
-          <a
-            href="https://github.com/eibrahim/freeresend"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm font-medium text-gray-600 hover:text-gray-900"
-          >
-            GitHub
-          </a>
+          <div className="flex items-center gap-4">
+            <Link href={sesProductionGuide.productUrl} className="text-sm font-medium text-gray-600 hover:text-gray-900">
+              Guide
+            </Link>
+            <a
+              href="https://github.com/eibrahim/freeresend"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-medium text-gray-600 hover:text-gray-900"
+            >
+              GitHub
+            </a>
+          </div>
         </nav>
 
         <section className="grid gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">

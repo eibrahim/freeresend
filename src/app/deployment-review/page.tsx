@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AlertTriangle, CheckCircle2, ExternalLink, MailCheck, Radar, ShieldCheck } from "lucide-react";
-import { deploymentReview, launchKit } from "@/config/launch-kit";
+import { deploymentReview, launchKit, sesProductionGuide } from "@/config/launch-kit";
 
 export const metadata: Metadata = {
   title: "FreeResend Deployment Review",
@@ -42,9 +42,14 @@ export default function DeploymentReviewPage() {
           <Link href="/" className="text-sm font-medium text-gray-600 hover:text-gray-900">
             FreeResend
           </Link>
-          <Link href={launchKit.productUrl} className="text-sm font-medium text-gray-600 hover:text-gray-900">
-            Launch Kit
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link href={sesProductionGuide.productUrl} className="text-sm font-medium text-gray-600 hover:text-gray-900">
+              Guide
+            </Link>
+            <Link href={launchKit.productUrl} className="text-sm font-medium text-gray-600 hover:text-gray-900">
+              Launch Kit
+            </Link>
+          </div>
         </nav>
 
         <section className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">

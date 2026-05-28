@@ -19,7 +19,7 @@ import {
 import EnvelopeIcon from "./EnvelopeIcon";
 import DeploymentReviewCta from "./DeploymentReviewCta";
 import LaunchKitCta from "./LaunchKitCta";
-import { deploymentReview, launchKit } from "@/config/launch-kit";
+import { deploymentReview, launchKit, sesProductionGuide } from "@/config/launch-kit";
 
 export default function LandingPage() {
   const [copiedCode, setCopiedCode] = useState(false);
@@ -61,6 +61,12 @@ export default function LandingPage() {
                 className="hidden text-gray-600 transition-colors hover:text-gray-900 md:inline"
               >
                 Launch Kit
+              </Link>
+              <Link
+                href={sesProductionGuide.productUrl}
+                className="hidden text-gray-600 transition-colors hover:text-gray-900 lg:inline"
+              >
+                Guide
               </Link>
               <Link
                 href="/tools/email-dns-checker"
@@ -202,6 +208,26 @@ export default function LandingPage() {
 
           <div className="mx-auto mb-12 max-w-4xl text-left">
             <LaunchKitCta compact />
+          </div>
+
+          <div className="mx-auto mb-12 max-w-4xl rounded-lg border border-emerald-100 bg-white p-6 text-left shadow-sm">
+            <div className="grid gap-5 lg:grid-cols-[1fr_auto] lg:items-center">
+              <div>
+                <p className="text-sm font-medium uppercase tracking-wide text-emerald-700">Production readiness</p>
+                <h3 className="mt-2 text-2xl font-bold text-gray-900">Check SES launch risk before the first send.</h3>
+                <p className="mt-3 text-gray-600">
+                  A free guide for sandbox status, DNS authentication, bounce and complaint webhooks, smoke tests, and
+                  rollback planning.
+                </p>
+              </div>
+              <Link
+                href={sesProductionGuide.productUrl}
+                className="inline-flex items-center justify-center space-x-2 rounded-lg bg-emerald-600 px-5 py-3 font-semibold text-white transition-colors hover:bg-emerald-700"
+              >
+                <BookOpenCheck className="h-5 w-5" />
+                <span>Read guide</span>
+              </Link>
+            </div>
           </div>
 
           <div className="mx-auto mb-12 max-w-4xl text-left">
@@ -544,6 +570,14 @@ export default function LandingPage() {
                     className="text-gray-400 hover:text-white transition-colors"
                   >
                     Deployment Review
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href={sesProductionGuide.productUrl}
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    SES Production Guide
                   </Link>
                 </li>
                 <li>

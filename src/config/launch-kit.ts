@@ -31,3 +31,9 @@ export const deploymentReview = {
     "One-page priority report delivered from your Stripe intake",
   ],
 } as const;
+
+export const sesProductionGuide = {
+  name: "SES Production Readiness Guide",
+  productUrl: "/guides/ses-production-readiness",
+  canonicalUrl: "https://www.freeresend.com/guides/ses-production-readiness",
+} as const;
