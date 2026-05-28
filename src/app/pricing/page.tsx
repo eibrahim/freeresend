@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import PricingCalculator from '../../components/PricingCalculator';
+import LaunchKitCta from '../../components/LaunchKitCta';
 
 export const metadata: Metadata = {
   title: 'Pricing Calculator - FreeResend',
@@ -34,6 +35,10 @@ export default function PricingPage() {
 
         {/* Pricing Calculator */}
         <PricingCalculator />
+
+        <div className="mt-12">
+          <LaunchKitCta />
+        </div>
 
         {/* Key Benefits */}
         <div className="mt-16 grid md:grid-cols-3 gap-8">

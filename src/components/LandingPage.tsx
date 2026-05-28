@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
+  BookOpenCheck,
   Code,
   DollarSign,
   Globe,
@@ -15,6 +16,8 @@ import {
   CheckCircle,
 } from "lucide-react";
 import EnvelopeIcon from "./EnvelopeIcon";
+import LaunchKitCta from "./LaunchKitCta";
+import { launchKit } from "@/config/launch-kit";
 
 export default function LandingPage() {
   const [copiedCode, setCopiedCode] = useState(false);
@@ -52,6 +55,12 @@ export default function LandingPage() {
                 <span className="hidden sm:inline">GitHub</span>
               </a>
               <Link
+                href={launchKit.productUrl}
+                className="hidden text-gray-600 transition-colors hover:text-gray-900 md:inline"
+              >
+                Launch Kit
+              </Link>
+              <Link
                 href="/login"
                 className="text-gray-600 hover:text-gray-900 transition-colors px-3 py-2"
               >
@@ -59,9 +68,10 @@ export default function LandingPage() {
               </Link>
               <Link
                 href="/pricing"
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                aria-label="Join Waitlist"
+                className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
               >
-                <span>Join Waitlist</span>
+                <span className="hidden sm:inline">Join Waitlist</span>
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
@@ -116,6 +126,13 @@ export default function LandingPage() {
               <Github className="h-5 w-5" />
               <span>View on GitHub</span>
             </a>
+            <Link
+              href={launchKit.productUrl}
+              className="border-2 border-gray-200 bg-white text-gray-700 px-8 py-4 rounded-lg hover:border-gray-300 transition-colors flex items-center justify-center space-x-2 font-semibold"
+            >
+              <BookOpenCheck className="h-5 w-5" />
+              <span>Launch Kit</span>
+            </Link>
           </div>
           
           <div className="text-center mb-8">
@@ -162,9 +179,13 @@ export default function LandingPage() {
             </div>
           </div>
 
+          <div className="mx-auto mb-12 max-w-4xl text-left">
+            <LaunchKitCta compact />
+          </div>
+
           {/* Migration Code Example */}
           <div className="max-w-2xl mx-auto">
-            <div className="bg-gray-900 rounded-lg p-6 text-left">
+            <div className="bg-gray-900 rounded-lg p-6 text-left overflow-x-auto">
               <div className="flex items-center justify-between mb-4">
                 <span className="text-gray-400 text-sm">
                   Migration is literally one line:
@@ -180,7 +201,7 @@ export default function LandingPage() {
                   )}
                 </button>
               </div>
-              <code className="text-green-400 font-mono text-sm block">
+              <code className="text-green-400 font-mono text-sm block whitespace-nowrap">
                 RESEND_BASE_URL=&quot;https://freeresend.com/api&quot;
               </code>
               <p className="text-gray-400 text-sm mt-2">
@@ -484,6 +505,14 @@ export default function LandingPage() {
             <div>
               <h5 className="font-semibold mb-4">Resources</h5>
               <ul className="space-y-2">
+                <li>
+                  <Link
+                    href={launchKit.productUrl}
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    Launch Kit
+                  </Link>
+                </li>
                 <li>
                   <a
                     href="https://github.com/eibrahim/freeresend"

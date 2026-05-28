@@ -6,6 +6,8 @@ FreeResend allows you to host your own email service using Amazon SES and option
 
 > 📰 **Stay updated**: Get the latest frontend development insights delivered weekly with [**Frontend Weekly**](https://www.frontendweekly.co/) - curated by the author of FreeResend!
 
+> 🧭 **Need a production rollout checklist?** FreeResend stays MIT-licensed and free to self-host. The optional [$12 Self-Hosted Launch Kit](https://www.freeresend.com/launch-kit) gives you a DNS, SES, webhook, smoke-test, and rollback checklist while supporting the project. You can also [buy it directly on Stripe](https://buy.stripe.com/7sY6oJec12WP3i6afQ8so02).
+
 ## Features
 
 - 🚀 **100% Resend-compatible** - True drop-in replacement using environment variables
@@ -402,6 +404,7 @@ MIT License - see LICENSE file for details.
 ## Support
 
 - 📖 **Documentation**: Check SETUP.md for detailed setup instructions
+- 🧭 **Launch Kit**: Optional [$12 self-hosted deployment checklist](https://www.freeresend.com/launch-kit)
 - 🐛 **Issues**: Report bugs via [GitHub Issues](https://github.com/eibrahim/freeresend/issues)
 - 💡 **Feature Requests**: Suggest improvements via GitHub Issues
 - 🚀 **Professional Support**: Custom development and enterprise support available via [EliteCoders](https://elitecoders.co/)

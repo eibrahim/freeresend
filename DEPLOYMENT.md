@@ -184,6 +184,7 @@ vercel --prod
 ## Support
 
 - **Documentation**: Check README.md and SETUP.md
+- **Launch Kit**: Optional deployment checklist at [freeresend.com/launch-kit](https://www.freeresend.com/launch-kit)
 - **Issues**: [GitHub Issues](https://github.com/eibrahim/freeresend/issues)
 - **Professional Support**: [EliteCoders](https://elitecoders.co/)
 
