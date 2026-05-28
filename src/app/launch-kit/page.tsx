@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, CheckCircle2, ExternalLink, ServerCog, ShieldCheck, Workflow } from "lucide-react";
-import { launchKit } from "@/config/launch-kit";
+import { deploymentReview, launchKit } from "@/config/launch-kit";
 
 export const metadata: Metadata = {
   title: "FreeResend Self-Hosted Launch Kit",
@@ -124,16 +124,17 @@ export default function LaunchKitPage() {
             <div>
               <h2 className="text-2xl font-bold">Need implementation help instead of a checklist?</h2>
               <p className="mt-2 text-gray-300">
-                For custom deployment, scaling, or integration work, use the professional support path through EliteCoders.
+                Start with a narrow {deploymentReview.price} review of your FreeResend deployment plan before committing
+                to custom work.
               </p>
             </div>
             <a
-              href="https://elitecoders.co/"
+              href={deploymentReview.checkoutUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-5 py-3 font-semibold text-gray-900 transition-colors hover:bg-gray-100"
             >
-              <span>Contact EliteCoders</span>
+              <span>Book deployment review</span>
               <ExternalLink className="h-4 w-4" />
             </a>
           </div>

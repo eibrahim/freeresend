@@ -16,8 +16,9 @@ import {
   CheckCircle,
 } from "lucide-react";
 import EnvelopeIcon from "./EnvelopeIcon";
+import DeploymentReviewCta from "./DeploymentReviewCta";
 import LaunchKitCta from "./LaunchKitCta";
-import { launchKit } from "@/config/launch-kit";
+import { deploymentReview, launchKit } from "@/config/launch-kit";
 
 export default function LandingPage() {
   const [copiedCode, setCopiedCode] = useState(false);
@@ -59,6 +60,12 @@ export default function LandingPage() {
                 className="hidden text-gray-600 transition-colors hover:text-gray-900 md:inline"
               >
                 Launch Kit
+              </Link>
+              <Link
+                href={deploymentReview.productUrl}
+                className="hidden text-gray-600 transition-colors hover:text-gray-900 lg:inline"
+              >
+                Review
               </Link>
               <Link
                 href="/login"
@@ -181,6 +188,10 @@ export default function LandingPage() {
 
           <div className="mx-auto mb-12 max-w-4xl text-left">
             <LaunchKitCta compact />
+          </div>
+
+          <div className="mx-auto mb-12 max-w-4xl text-left">
+            <DeploymentReviewCta compact />
           </div>
 
           {/* Migration Code Example */}
@@ -511,6 +522,14 @@ export default function LandingPage() {
                     className="text-gray-400 hover:text-white transition-colors"
                   >
                     Launch Kit
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href={deploymentReview.productUrl}
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    Deployment Review
                   </Link>
                 </li>
                 <li>

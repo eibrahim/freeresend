@@ -8,6 +8,8 @@ FreeResend allows you to host your own email service using Amazon SES and option
 
 > 🧭 **Need a production rollout checklist?** FreeResend stays MIT-licensed and free to self-host. The optional [$12 Self-Hosted Launch Kit](https://www.freeresend.com/launch-kit) gives you a DNS, SES, webhook, smoke-test, and rollback checklist while supporting the project. You can also [buy it directly on Stripe](https://buy.stripe.com/7sY6oJec12WP3i6afQ8so02).
 
+> 🔎 **Want a second set of eyes before launch?** The optional [$12 FreeResend Deployment Review](https://www.freeresend.com/deployment-review) is a narrow manual review of one self-hosted rollout plan. Stripe collects your deployment URL or GitHub issue and main SES/DNS concern. You can also [book it directly on Stripe](https://buy.stripe.com/5kQ8wR2tj0OHg4S5ZA8so04).
+
 ## Features
 
 - 🚀 **100% Resend-compatible** - True drop-in replacement using environment variables
@@ -405,6 +407,7 @@ MIT License - see LICENSE file for details.
 
 - 📖 **Documentation**: Check SETUP.md for detailed setup instructions
 - 🧭 **Launch Kit**: Optional [$12 self-hosted deployment checklist](https://www.freeresend.com/launch-kit)
+- 🔎 **Deployment Review**: Optional [$12 one-page review of your SES, DNS, webhook, and launch-risk plan](https://www.freeresend.com/deployment-review)
 - 🐛 **Issues**: Report bugs via [GitHub Issues](https://github.com/eibrahim/freeresend/issues)
 - 💡 **Feature Requests**: Suggest improvements via GitHub Issues
 - 🚀 **Professional Support**: Custom development and enterprise support available via [EliteCoders](https://elitecoders.co/)

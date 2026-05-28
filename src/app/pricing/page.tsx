@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import PricingCalculator from '../../components/PricingCalculator';
+import DeploymentReviewCta from '../../components/DeploymentReviewCta';
 import LaunchKitCta from '../../components/LaunchKitCta';
 
 export const metadata: Metadata = {
@@ -38,6 +39,10 @@ export default function PricingPage() {
 
         <div className="mt-12">
           <LaunchKitCta />
+        </div>
+
+        <div className="mt-8">
+          <DeploymentReviewCta />
         </div>
 
         {/* Key Benefits */}
