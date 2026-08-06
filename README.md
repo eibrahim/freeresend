@@ -62,6 +62,9 @@ NEXTAUTH_SECRET=your-super-secret-jwt-key-here
 
 # Database Configuration (PostgreSQL)
 DATABASE_URL=postgresql://username:password@hostname:port/database
+# TLS is on by default. Set to false only for a database reachable over an
+# already-encrypted private network (e.g. Postgres inside the same cluster).
+# DATABASE_SSL=false
 
 # AWS SES Configuration
 AWS_REGION=us-east-1

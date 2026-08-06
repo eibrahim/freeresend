@@ -129,6 +129,7 @@ Required environment variables:
 ```bash
 # Database (PostgreSQL)
 DATABASE_URL=postgresql://...
+DATABASE_SSL=false  # optional; disables TLS (in-cluster/private-network Postgres). On by default.
 
 # AWS SES
 AWS_REGION=us-east-1

@@ -3,10 +3,16 @@ import { Pool, PoolClient } from "pg";
 // PostgreSQL connection pool
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false,
-    ca: undefined,
-  },
+  // Managed providers (Supabase, RDS, DO) require TLS, so it stays ON by
+  // default. Set DATABASE_SSL=false when the database is only reachable over a private
+  // network that is already encrypted.
+  ssl:
+    process.env.DATABASE_SSL === "false"
+      ? false
+      : {
+          rejectUnauthorized: false,
+          ca: undefined,
+        },
   max: 5, // Maximum number of clients in the pool (reduced from 20)
   idleTimeoutMillis: 10000, // Close idle clients after 10 seconds (reduced from 30s)
   connectionTimeoutMillis: 5000, // Return an error after 5 seconds if connection could not be established

@@ -43,6 +43,7 @@ This setup deploys PostgreSQL inside your Kubernetes cluster alongside the FreeR
 Edit `02-secrets.yaml` and update:
 - `POSTGRES_PASSWORD` - Choose a secure password
 - `DATABASE_URL` - Update with your chosen password
+- `DATABASE_SSL` - Keep `"false"`; the in-cluster Postgres has no TLS listener
 - AWS credentials
 - Other app secrets
 

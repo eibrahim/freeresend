@@ -58,6 +58,7 @@ Update `secret.yaml` with your actual values:
 - `NEXTAUTH_URL` - https://www.freeresend.com
 - `NEXTAUTH_SECRET` - JWT secret key
 - `DATABASE_URL` - PostgreSQL connection string
+- `DATABASE_SSL` - Optional; `"false"` disables TLS on the connection (in-cluster Postgres). Defaults to on.
 - `AWS_REGION` - AWS SES region
 - `AWS_ACCESS_KEY_ID` - AWS access key
 - `AWS_SECRET_ACCESS_KEY` - AWS secret key

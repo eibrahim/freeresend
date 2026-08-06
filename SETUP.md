@@ -77,10 +77,16 @@ cp .env.local.example .env.local
 2. Edit `.env.local` with your actual values:
 
 ```env
-# Database
+# Database (SUPABASE)
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-key
+
+# Database (PostgreSQL)
+DATABASE_URL=postgresql://username:password@hostname:port/database
+# TLS is on by default. Set to false only for a database reachable over an
+# already-encrypted private network (e.g. Postgres inside the same cluster).
+# DATABASE_SSL=false
 
 # AWS
 AWS_REGION=us-east-1

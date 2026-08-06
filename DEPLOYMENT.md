@@ -41,6 +41,7 @@ ADMIN_PASSWORD=secure-password
 # Optional Variables
 DO_API_TOKEN=dop_v1_...
 WEBHOOK_URL=https://your-domain.vercel.app/api/webhooks/ses
+DATABASE_SSL=false  # only for a database on an already-encrypted private network
 ```
 
 ### 3. Deploy to Vercel
