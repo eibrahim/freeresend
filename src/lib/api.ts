@@ -142,6 +142,21 @@ class ApiClient {
   async getEmail(id: string) {
     return this.request(`/emails/${id}`);
   }
+
+  // Analytics
+  async getAnalytics(params: {
+    startDate: string;
+    endDate: string;
+    domainId?: string;
+  }) {
+    const searchParams = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value) searchParams.append(key, value.toString());
+    });
+
+    const query = searchParams.toString();
+    return this.request(`/analytics${query ? `?${query}` : ""}`);
+  }
 }
 
 export const api = new ApiClient();

@@ -163,3 +163,66 @@ export function handleError(error: unknown): NextResponse {
     { status: 500 }
   );
 }
+
+// Simple in-memory rate limiter for expensive operations
+interface RateLimitEntry {
+  count: number;
+  resetTime: number;
+}
+
+const rateLimitStore = new Map<string, RateLimitEntry>();
+
+// Cleanup old entries every 5 minutes
+if (typeof setInterval !== 'undefined') {
+  setInterval(() => {
+    const now = Date.now();
+    for (const [key, entry] of rateLimitStore.entries()) {
+      if (entry.resetTime < now) {
+        rateLimitStore.delete(key);
+      }
+    }
+  }, 5 * 60 * 1000);
+}
+
+export function withRateLimit<T = Record<string, string>>(
+  handler: (req: AuthenticatedRequest, context?: RouteContext<T>) => Promise<NextResponse>,
+  options: { maxRequests: number; windowMs: number } = { maxRequests: 10, windowMs: 60000 }
+) {
+  return async (req: AuthenticatedRequest, context?: RouteContext<T>) => {
+    // Use user ID or IP address as rate limit key
+    const userId = req.user?.id;
+    const ip = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "unknown";
+    const rateLimitKey = userId || ip;
+
+    const now = Date.now();
+    const entry = rateLimitStore.get(rateLimitKey);
+
+    if (entry) {
+      if (entry.resetTime > now) {
+        // Within the time window
+        if (entry.count >= options.maxRequests) {
+          return NextResponse.json(
+            {
+              error: "Rate limit exceeded. Please try again later.",
+              retryAfter: Math.ceil((entry.resetTime - now) / 1000)
+            },
+            { status: 429 }
+          );
+        }
+        entry.count++;
+      } else {
+        // Time window has passed, reset
+        entry.count = 1;
+        entry.resetTime = now + options.windowMs;
+      }
+    } else {
+      // First request from this key
+      rateLimitStore.set(rateLimitKey, {
+        count: 1,
+        resetTime: now + options.windowMs,
+      });
+    }
+
+    return handler(req, context);
+  };
+}

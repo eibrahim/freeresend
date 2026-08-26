@@ -5,8 +5,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import DomainsTab from "./DomainsTab";
 import ApiKeysTab from "./ApiKeysTab";
 import EmailLogsTab from "./EmailLogsTab";
+import AnalyticsTab from "./AnalyticsTab";
 
-type Tab = "domains" | "apikeys" | "logs";
+type Tab = "domains" | "apikeys" | "analytics" | "logs";
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
@@ -22,6 +23,11 @@ export default function Dashboard() {
       id: "apikeys" as Tab,
       name: "API Keys",
       description: "Manage API keys for sending emails",
+    },
+    {
+      id: "analytics" as Tab,
+      name: "Analytics",
+      description: "View email performance metrics",
     },
     {
       id: "logs" as Tab,
@@ -81,6 +87,7 @@ export default function Dashboard() {
         <div className="px-4 py-6 sm:px-0">
           {activeTab === "domains" && <DomainsTab />}
           {activeTab === "apikeys" && <ApiKeysTab />}
+          {activeTab === "analytics" && <AnalyticsTab />}
           {activeTab === "logs" && <EmailLogsTab />}
         </div>
       </main>
